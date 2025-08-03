@@ -18,7 +18,7 @@ namespace Bartender.GameCore.UseCases
             _eventBus = eventBus;
         }
 
-        public void Execute(List<Ingredient> ingredients)
+        public virtual void Execute(List<Ingredient> ingredients)
         {
             if (!_inventoryService.HasIngredients(ingredients))
             {

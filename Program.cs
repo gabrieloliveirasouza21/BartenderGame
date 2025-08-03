@@ -2,7 +2,6 @@
 using Bartender.GameCore.Domain.Models;
 using Bartender.GameCore.Domain.Services;
 using Bartender.GameCore.Events;
-using Bartender.GameCore.Events.Events;
 using Bartender.GameCore.UseCases;
 
 namespace Bartender
@@ -11,32 +10,41 @@ namespace Bartender
     {
         static void Main(string[] args)
         {
+            // Configuração do inventário inicial
+            var initialInventory = new Dictionary<string, int> {
+                { "Café", 10 },
+                { "Leite", 8 },
+                { "Canela", 5 },
+                { "Açúcar", 7 },
+                { "Chocolate", 4 },
+                { "Água", 15 }
+            };
+
+            // Inicialização dos serviços de domínio
             var recipeBook = new RecipeBook();
             var craftService = new CraftService(recipeBook);
-            var inventory = new InventoryService(new Dictionary<string, int> {
-            { "Café", 5 }, { "Leite", 3 }, { "Canela", 2 }
-        });
-            var eventBus = new EventBus();
-            var useCase = new PrepareDrinkUseCase(craftService, inventory, eventBus);
-            var view = new ConsoleCraftView();
-            var presenter = new CraftPresenter(view, useCase);
-
-            eventBus.Subscribe<DrinkPreparedEvent>(e => {
-                var evt = (DrinkPreparedEvent)e;
-                Console.WriteLine($"Evento: Drink '{evt.Drink.Name}' preparado com sucesso!");
-            });
-
+            var inventoryService = new InventoryService(initialInventory);
             var clientService = new ClientService();
-            var client = clientService.GetNextClient();
-            Console.WriteLine($"Cliente: {client.Name}, deseja um drink com efeito: {client.DesiredEffect}\n");
+            var eventBus = new EventBus();
+            var gameState = new GameState();
 
-            var ingredients = new List<Ingredient> {
-            new Ingredient("Café", new List<string> { "Amargo" }),
-            new Ingredient("Leite", new List<string> { "Doce" }),
-            new Ingredient("Canela", new List<string> { "Doce" })
-        };
+            // Inicialização dos casos de uso
+            var prepareDrinkUseCase = new PrepareDrinkUseCase(craftService, inventoryService, eventBus);
+            var serveClientUseCase = new ServeClientUseCase(eventBus);
+            var gameLoopUseCase = new GameLoopUseCase(clientService, eventBus, gameState);
 
-            presenter.OnPrepareDrink(ingredients);
+            // Inicialização da camada de apresentação
+            var gameView = new ConsoleGameView();
+            var gamePresenter = new GamePresenter(
+                gameView,
+                gameLoopUseCase,
+                prepareDrinkUseCase,
+                serveClientUseCase,
+                inventoryService,
+                eventBus);
+
+            // Inicia o jogo
+            gamePresenter.StartGame();
         }
     }
 }
