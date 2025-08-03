@@ -8,14 +8,18 @@ namespace Bartender.GameCore.UseCases
     public class GameLoopUseCase
     {
         private readonly IClientService _clientService;
+        private readonly IPaymentService _paymentService;
         private readonly EventBus _eventBus;
         private readonly GameState _gameState;
+        private readonly int _baseDrinkPrice;
 
-        public GameLoopUseCase(IClientService clientService, EventBus eventBus, GameState gameState)
+        public GameLoopUseCase(IClientService clientService, IPaymentService paymentService, EventBus eventBus, GameState gameState, int baseDrinkPrice = 50)
         {
             _clientService = clientService;
+            _paymentService = paymentService;
             _eventBus = eventBus;
             _gameState = gameState;
+            _baseDrinkPrice = baseDrinkPrice;
         }
 
         public virtual Client StartNewRound()
@@ -41,8 +45,16 @@ namespace Bartender.GameCore.UseCases
             if (!_gameState.IsRoundActive)
                 throw new InvalidOperationException("Nenhuma rodada ativa no momento.");
 
-            var scoreChange = CalculateScoreChange(reaction);
-            _gameState.CompleteRound(scoreChange);
+            var paymentResult = _paymentService.CalculatePayment(reaction, _baseDrinkPrice);
+            _gameState.ProcessPayment(paymentResult);
+
+            // Publica evento de pagamento processado
+            if (_gameState.CurrentClient != null && _gameState.PreparedDrink != null)
+            {
+                _eventBus.Publish(new PaymentProcessedEvent(_gameState.CurrentClient, _gameState.PreparedDrink, paymentResult));
+            }
+
+            _gameState.CompleteRound(0); // Agora passamos 0 porque o pagamento já foi processado
             
             _eventBus.Publish(new GameRoundCompletedEvent(_gameState.CurrentRound - 1));
         }
@@ -52,6 +64,7 @@ namespace Bartender.GameCore.UseCases
             return _gameState;
         }
 
+        // Método mantido para compatibilidade com testes existentes
         private int CalculateScoreChange(ClientReaction reaction)
         {
             return reaction switch

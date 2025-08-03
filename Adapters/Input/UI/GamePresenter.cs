@@ -97,6 +97,7 @@ namespace Bartender.Adapters.Input.UI
         {
             _eventBus.Subscribe<DrinkPreparedEvent>(OnDrinkPrepared);
             _eventBus.Subscribe<ClientReactionEvent>(OnClientReaction);
+            _eventBus.Subscribe<PaymentProcessedEvent>(OnPaymentProcessed);
         }
 
         private void OnDrinkPrepared(IEvent eventData)
@@ -109,6 +110,12 @@ namespace Bartender.Adapters.Input.UI
         {
             var reactionEvent = (ClientReactionEvent)eventData;
             _gameView.DisplayClientReaction(reactionEvent.Message);
+        }
+
+        private void OnPaymentProcessed(IEvent eventData)
+        {
+            var paymentEvent = (PaymentProcessedEvent)eventData;
+            _gameView.DisplayPaymentResult(paymentEvent.PaymentResult);
         }
     }
 }

@@ -102,6 +102,38 @@ namespace Bartender.Adapters.Input.UI
             Console.WriteLine("----------------------------");
             Console.WriteLine(reactionMessage);
             Console.WriteLine();
+        }
+
+        public void DisplayPaymentResult(PaymentResult paymentResult)
+        {
+            Console.WriteLine();
+            Console.WriteLine("?? PAGAMENTO:");
+            Console.WriteLine("========================================");
+            Console.WriteLine(paymentResult.PaymentMessage);
+            Console.WriteLine();
+            
+            if (paymentResult.Status == PaymentStatus.Paid)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"? Total recebido: ${paymentResult.TotalAmount}");
+                if (paymentResult.TipAmount > 0)
+                {
+                    Console.WriteLine($"?? Gorjeta: ${paymentResult.TipAmount}");
+                }
+            }
+            else if (paymentResult.Status == PaymentStatus.PartiallyPaid)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"??  Valor parcial recebido: ${paymentResult.TotalAmount}");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("? Nenhum pagamento recebido!");
+            }
+            
+            Console.ResetColor();
+            Console.WriteLine();
             Console.WriteLine("Pressione qualquer tecla para continuar...");
             Console.ReadKey();
         }
@@ -111,7 +143,7 @@ namespace Bartender.Adapters.Input.UI
             Console.WriteLine();
             Console.WriteLine("STATUS DO JOGO:");
             Console.WriteLine($"   Rodada: {round}");
-            Console.WriteLine($"   Pontuação: {score}");
+            Console.WriteLine($"   ?? Dinheiro total: ${score}");
             Console.WriteLine();
         }
 
