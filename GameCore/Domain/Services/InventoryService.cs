@@ -35,6 +35,11 @@ namespace Bartender.GameCore.Domain.Services
             return needed.All(i => _stock.ContainsKey(i.Name) && _stock[i.Name] > 0);
         }
 
+        public int GetIngredientStock(string ingredientName)
+        {
+            return _stock.TryGetValue(ingredientName, out int stock) ? stock : 0;
+        }
+
         private List<string> GetTagsFor(string ingredientName)
         {
             return ingredientName switch

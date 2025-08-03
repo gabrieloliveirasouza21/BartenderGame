@@ -47,7 +47,7 @@ namespace Bartender.Adapters.Input.UI
                     _gameView.DisplayClientArrival(client);
 
                     var availableIngredients = _inventoryService.GetAvailableIngredients();
-                    _gameView.DisplayAvailableIngredients(availableIngredients);
+                    _gameView.DisplayAvailableIngredients(availableIngredients, _inventoryService);
 
                     var selectedIngredients = _gameView.GetSelectedIngredients(availableIngredients);
 

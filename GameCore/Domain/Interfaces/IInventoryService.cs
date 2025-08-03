@@ -7,5 +7,6 @@ namespace Bartender.GameCore.Domain.Interfaces
         List<Ingredient> GetAvailableIngredients();
         void ConsumeIngredients(List<Ingredient> usedIngredients);
         bool HasIngredients(List<Ingredient> needed);
+        int GetIngredientStock(string ingredientName);
     }
 }

@@ -1,5 +1,6 @@
 using Bartender.Adapters.Input.UI.Interfaces;
 using Bartender.GameCore.Domain.Models;
+using Bartender.GameCore.Domain.Interfaces;
 
 namespace Bartender.Adapters.Input.UI
 {
@@ -20,7 +21,7 @@ namespace Bartender.Adapters.Input.UI
         {
             Console.Clear();
             Console.WriteLine("========================================");
-            Console.WriteLine($"?? CLIENTE: {client.Name}");
+            Console.WriteLine($"CLIENTE: {client.Name}");
             Console.WriteLine("========================================");
             Console.WriteLine($"\"Olá! Eu gostaria de algo {client.DesiredEffect}, por favor.\"");
             Console.WriteLine();
@@ -28,7 +29,7 @@ namespace Bartender.Adapters.Input.UI
 
         public void DisplayAvailableIngredients(List<Ingredient> ingredients)
         {
-            Console.WriteLine("?? INGREDIENTES DISPONÍVEIS:");
+            Console.WriteLine("INGREDIENTES DISPONÍVEIS:");
             Console.WriteLine("----------------------------");
             for (int i = 0; i < ingredients.Count; i++)
             {
@@ -38,11 +39,24 @@ namespace Bartender.Adapters.Input.UI
             Console.WriteLine();
         }
 
+        public void DisplayAvailableIngredients(List<Ingredient> ingredients, IInventoryService inventoryService)
+        {
+            Console.WriteLine("INGREDIENTES DISPONÍVEIS:");
+            Console.WriteLine("----------------------------");
+            for (int i = 0; i < ingredients.Count; i++)
+            {
+                var ingredient = ingredients[i];
+                var quantity = inventoryService.GetIngredientStock(ingredient.Name);
+                Console.WriteLine($"{i + 1}. {ingredient.Name} (Tags: {string.Join(", ", ingredient.Tags)}) - Quantidade: {quantity}");
+            }
+            Console.WriteLine();
+        }
+
         public List<Ingredient> GetSelectedIngredients(List<Ingredient> availableIngredients)
         {
             var selectedIngredients = new List<Ingredient>();
             
-            Console.WriteLine("?? PREPARANDO DRINK:");
+            Console.WriteLine("PREPARANDO DRINK:");
             Console.WriteLine("Digite os números dos ingredientes que deseja usar (separados por vírgula).");
             Console.WriteLine("Exemplo: 1,3,5 para usar ingredientes 1, 3 e 5");
             Console.Write("Ingredientes selecionados: ");
@@ -70,7 +84,7 @@ namespace Bartender.Adapters.Input.UI
         public bool ConfirmServeDrink(Drink drink)
         {
             Console.WriteLine();
-            Console.WriteLine("?? DRINK PREPARADO:");
+            Console.WriteLine("DRINK PREPARADO:");
             Console.WriteLine($"   Nome: {drink.Name}");
             Console.WriteLine($"   Efeito: {drink.Effect}");
             Console.WriteLine($"   Ingredientes: {string.Join(", ", drink.Ingredients.Select(i => i.Name))}");
@@ -84,7 +98,7 @@ namespace Bartender.Adapters.Input.UI
         public void DisplayClientReaction(string reactionMessage)
         {
             Console.WriteLine();
-            Console.WriteLine("?? REAÇÃO DO CLIENTE:");
+            Console.WriteLine("REAÇÃO DO CLIENTE:");
             Console.WriteLine("----------------------------");
             Console.WriteLine(reactionMessage);
             Console.WriteLine();
@@ -95,7 +109,7 @@ namespace Bartender.Adapters.Input.UI
         public void DisplayGameScore(int score, int round)
         {
             Console.WriteLine();
-            Console.WriteLine("?? STATUS DO JOGO:");
+            Console.WriteLine("STATUS DO JOGO:");
             Console.WriteLine($"   Rodada: {round}");
             Console.WriteLine($"   Pontuação: {score}");
             Console.WriteLine();

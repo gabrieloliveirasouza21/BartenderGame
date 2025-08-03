@@ -1,4 +1,5 @@
 using Bartender.GameCore.Domain.Models;
+using Bartender.GameCore.Domain.Interfaces;
 
 namespace Bartender.Adapters.Input.UI.Interfaces
 {
@@ -7,6 +8,7 @@ namespace Bartender.Adapters.Input.UI.Interfaces
         void DisplayWelcomeMessage();
         void DisplayClientArrival(Client client);
         void DisplayAvailableIngredients(List<Ingredient> ingredients);
+        void DisplayAvailableIngredients(List<Ingredient> ingredients, IInventoryService inventoryService);
         List<Ingredient> GetSelectedIngredients(List<Ingredient> availableIngredients);
         bool ConfirmServeDrink(Drink drink);
         void DisplayClientReaction(string reactionMessage);
