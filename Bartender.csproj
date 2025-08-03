@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="GameCore\" />
+    <Folder Include="Adapters\Output\" />
   </ItemGroup>
 
 </Project>
