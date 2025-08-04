@@ -164,5 +164,80 @@ namespace Bartender.Adapters.Input.UI
             Console.WriteLine("Pressione qualquer tecla para sair...");
             Console.ReadKey();
         }
+
+        // Shop methods
+        public void DisplayShopOpening()
+        {
+            Console.Clear();
+            Console.WriteLine("??========================================");
+            Console.WriteLine("           LOJA DE INGREDIENTES");
+            Console.WriteLine("========================================");
+            Console.WriteLine("Parabéns! Você serviu 3 clientes!");
+            Console.WriteLine("A loja está aberta para compras!");
+            Console.WriteLine();
+        }
+
+        public void DisplayShopItems(List<ShopItem> items, int playerMoney)
+        {
+            Console.WriteLine($"?? Seu dinheiro: ${playerMoney}");
+            Console.WriteLine();
+            Console.WriteLine("ITENS DISPONÍVEIS:");
+            Console.WriteLine("----------------------------");
+            
+            for (int i = 0; i < items.Count; i++)
+            {
+                var item = items[i];
+                var typeIcon = item.Type == ShopItemType.NewIngredient ? "??" : "??";
+                var tags = item.Tags.Any() ? $" (Tags: {string.Join(", ", item.Tags)})" : "";
+                
+                Console.WriteLine($"{i + 1}. {typeIcon} {item.Name}{tags}");
+                Console.WriteLine($"    Quantidade: {item.Quantity} | Preço: ${item.Price}");
+                Console.WriteLine();
+            }
+        }
+
+        public ShopItem? GetSelectedShopItem(List<ShopItem> items)
+        {
+            Console.WriteLine("Digite o número do item que deseja comprar (0 para sair da loja):");
+            Console.Write("Sua escolha: ");
+            
+            var input = Console.ReadLine();
+            if (!int.TryParse(input, out int choice) || choice < 0 || choice > items.Count)
+            {
+                Console.WriteLine("Opção inválida!");
+                return null;
+            }
+            
+            if (choice == 0)
+                return null;
+                
+            return items[choice - 1];
+        }
+
+        public void DisplayPurchaseResult(bool success, ShopItem item, int remainingMoney)
+        {
+            Console.WriteLine();
+            if (success)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"? Compra realizada com sucesso!");
+                Console.WriteLine($"?? {item.Name} (x{item.Quantity}) adicionado ao inventário!");
+                Console.WriteLine($"?? Dinheiro restante: ${remainingMoney}");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"? Dinheiro insuficiente para comprar {item.Name}!");
+            }
+            Console.ResetColor();
+            Console.WriteLine();
+        }
+
+        public bool AskToContinueShopping()
+        {
+            Console.Write("Deseja continuar comprando? (s/n): ");
+            var response = Console.ReadLine()?.ToLower();
+            return response == "s" || response == "sim" || response == "y" || response == "yes";
+        }
     }
 }

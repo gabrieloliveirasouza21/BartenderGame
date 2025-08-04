@@ -57,6 +57,19 @@ namespace Bartender.GameCore.Domain.Models
             TotalTipsEarned += paymentResult.TipAmount;
         }
 
+        public void SpendMoney(int amount)
+        {
+            if (amount > Money)
+                throw new InvalidOperationException("Dinheiro insuficiente para realizar a compra.");
+            
+            Money -= amount;
+        }
+
+        public bool ShouldOpenShop()
+        {
+            return CurrentRound > 1 && (CurrentRound - 1) % 3 == 0;
+        }
+
         // Método para compatibilidade com código existente
         public void AddScore(int points)
         {

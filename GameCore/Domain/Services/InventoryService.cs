@@ -6,10 +6,12 @@ namespace Bartender.GameCore.Domain.Services
     public class InventoryService : IInventoryService
     {
         private readonly Dictionary<string, int> _stock;
+        private readonly Dictionary<string, List<string>> _ingredientTags;
 
         public InventoryService(Dictionary<string, int> initialStock)
         {
             _stock = initialStock;
+            _ingredientTags = InitializeIngredientTags();
         }
 
         public List<Ingredient> GetAvailableIngredients()
@@ -37,17 +39,38 @@ namespace Bartender.GameCore.Domain.Services
 
         public int GetIngredientStock(string ingredientName)
         {
-            return _stock.TryGetValue(ingredientName, out int stock) ? stock : 0;
+            return _stock.TryGetValue(ingredientName, out int stock) ? stock : -1;
+        }
+
+        public void AddNewIngredient(string name, List<string> tags, int quantity)
+        {
+            _stock[name] = quantity;
+            _ingredientTags[name] = tags;
+        }
+
+        public void RestockIngredient(string name, int quantity)
+        {
+            if (_stock.ContainsKey(name))
+            {
+                _stock[name] += quantity;
+            }
         }
 
         private List<string> GetTagsFor(string ingredientName)
         {
-            return ingredientName switch
+            return _ingredientTags.TryGetValue(ingredientName, out var tags) ? tags : new List<string>();
+        }
+
+        private Dictionary<string, List<string>> InitializeIngredientTags()
+        {
+            return new Dictionary<string, List<string>>
             {
-                "Café" => new List<string> { "Amargo" },
-                "Leite" => new List<string> { "Doce" },
-                "Canela" => new List<string> { "Doce" },
-                _ => new List<string>()
+                { "Café", new List<string> { "Amargo" } },
+                { "Leite", new List<string> { "Doce" } },
+                { "Canela", new List<string> { "Doce" } },
+                { "Açúcar", new List<string>() },
+                { "Chocolate", new List<string>() },
+                { "Água", new List<string>() }
             };
         }
     }

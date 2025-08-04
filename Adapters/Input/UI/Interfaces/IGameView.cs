@@ -16,5 +16,12 @@ namespace Bartender.Adapters.Input.UI.Interfaces
         void DisplayGameScore(int score, int round);
         bool AskToContinue();
         void DisplayGameOver();
+        
+        // Shop methods
+        void DisplayShopOpening();
+        void DisplayShopItems(List<ShopItem> items, int playerMoney);
+        ShopItem? GetSelectedShopItem(List<ShopItem> items);
+        void DisplayPurchaseResult(bool success, ShopItem item, int remainingMoney);
+        bool AskToContinueShopping();
     }
 }

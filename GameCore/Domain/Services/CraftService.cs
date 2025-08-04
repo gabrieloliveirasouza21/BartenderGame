@@ -28,14 +28,21 @@ namespace Bartender.GameCore.Domain.Services
         private Drink CraftDynamicDrink(List<Ingredient> ingredients)
         {
             var allTags = ingredients.SelectMany(i => i.Tags);
+            var drinkName = $"Improvisado: {string.Join(", ", ingredients.Select(i => i.Name))}";
+            
+            if (!allTags.Any())
+            {
+                // Se não há tags, criar drink neutro
+                return new Drink(drinkName, ingredients, "Neutro");
+            }
+            
             var dominantTag = allTags
                 .GroupBy(tag => tag)
                 .OrderByDescending(g => g.Count())
                 .First().Key;
 
             var effect = TagToEffect(dominantTag);
-            var name = $"Improvisado: {string.Join(", ", ingredients.Select(i => i.Name))}";
-            return new Drink(name, ingredients, effect);
+            return new Drink(drinkName, ingredients, effect);
         }
 
         private string TagToEffect(string tag) => tag switch

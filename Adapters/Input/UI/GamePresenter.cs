@@ -13,6 +13,7 @@ namespace Bartender.Adapters.Input.UI
         private readonly GameLoopUseCase _gameLoopUseCase;
         private readonly PrepareDrinkUseCase _prepareDrinkUseCase;
         private readonly ServeClientUseCase _serveClientUseCase;
+        private readonly ShopUseCase _shopUseCase;
         private readonly IInventoryService _inventoryService;
         private readonly EventBus _eventBus;
 
@@ -21,6 +22,7 @@ namespace Bartender.Adapters.Input.UI
             GameLoopUseCase gameLoopUseCase,
             PrepareDrinkUseCase prepareDrinkUseCase,
             ServeClientUseCase serveClientUseCase,
+            ShopUseCase shopUseCase,
             IInventoryService inventoryService,
             EventBus eventBus)
         {
@@ -28,6 +30,7 @@ namespace Bartender.Adapters.Input.UI
             _gameLoopUseCase = gameLoopUseCase;
             _prepareDrinkUseCase = prepareDrinkUseCase;
             _serveClientUseCase = serveClientUseCase;
+            _shopUseCase = shopUseCase;
             _inventoryService = inventoryService;
             _eventBus = eventBus;
 
@@ -74,6 +77,12 @@ namespace Bartender.Adapters.Input.UI
                             var reaction = _serveClientUseCase.Execute(client, gameState.PreparedDrink);
                             _gameLoopUseCase.CompleteRound(reaction);
                             
+                            // Check if shop should open
+                            if (gameState.ShouldOpenShop())
+                            {
+                                OpenShop(gameState);
+                            }
+                            
                             _gameView.DisplayGameScore(gameState.Score, gameState.CurrentRound);
                             gameRunning = _gameView.AskToContinue();
                         }
@@ -93,11 +102,52 @@ namespace Bartender.Adapters.Input.UI
             _gameView.DisplayGameOver();
         }
 
+        private void OpenShop(GameState gameState)
+        {
+            _gameView.DisplayShopOpening();
+            _eventBus.Publish(new ShopOpenedEvent(gameState.CurrentRound - 1));
+            
+            bool continueShopping = true;
+            while (continueShopping && gameState.Money > 0)
+            {
+                var availableItems = _shopUseCase.GetAvailableItems();
+                
+                if (!availableItems.Any())
+                {
+                    Console.WriteLine("Nenhum item disponível na loja!");
+                    break;
+                }
+
+                _gameView.DisplayShopItems(availableItems, gameState.Money);
+                var selectedItem = _gameView.GetSelectedShopItem(availableItems);
+                
+                if (selectedItem == null)
+                {
+                    break; // Player chose to exit shop
+                }
+
+                var success = _shopUseCase.PurchaseItem(selectedItem, gameState);
+                _gameView.DisplayPurchaseResult(success, selectedItem, gameState.Money);
+                
+                if (gameState.Money > 0)
+                {
+                    continueShopping = _gameView.AskToContinueShopping();
+                }
+                else
+                {
+                    Console.WriteLine("Você não tem mais dinheiro para comprar!");
+                    continueShopping = false;
+                }
+            }
+        }
+
         private void SubscribeToEvents()
         {
             _eventBus.Subscribe<DrinkPreparedEvent>(OnDrinkPrepared);
             _eventBus.Subscribe<ClientReactionEvent>(OnClientReaction);
             _eventBus.Subscribe<PaymentProcessedEvent>(OnPaymentProcessed);
+            _eventBus.Subscribe<ItemPurchasedEvent>(OnItemPurchased);
+            _eventBus.Subscribe<ShopOpenedEvent>(OnShopOpened);
         }
 
         private void OnDrinkPrepared(IEvent eventData)
@@ -116,6 +166,18 @@ namespace Bartender.Adapters.Input.UI
         {
             var paymentEvent = (PaymentProcessedEvent)eventData;
             _gameView.DisplayPaymentResult(paymentEvent.PaymentResult);
+        }
+
+        private void OnItemPurchased(IEvent eventData)
+        {
+            var purchaseEvent = (ItemPurchasedEvent)eventData;
+            // Additional logging or processing can be added here
+        }
+
+        private void OnShopOpened(IEvent eventData)
+        {
+            var shopEvent = (ShopOpenedEvent)eventData;
+            // Additional logging or processing can be added here
         }
     }
 }

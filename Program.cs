@@ -26,6 +26,7 @@ namespace Bartender
             var inventoryService = new InventoryService(initialInventory);
             var clientService = new ClientService();
             var paymentService = new PaymentService();
+            var shopService = new ShopService(inventoryService);
             var eventBus = new EventBus();
             var gameState = new GameState();
 
@@ -33,6 +34,7 @@ namespace Bartender
             var prepareDrinkUseCase = new PrepareDrinkUseCase(craftService, inventoryService, eventBus);
             var serveClientUseCase = new ServeClientUseCase(eventBus);
             var gameLoopUseCase = new GameLoopUseCase(clientService, paymentService, eventBus, gameState);
+            var shopUseCase = new ShopUseCase(shopService, eventBus);
 
             // Inicialização da camada de apresentação
             var gameView = new ConsoleGameView();
@@ -41,6 +43,7 @@ namespace Bartender
                 gameLoopUseCase,
                 prepareDrinkUseCase,
                 serveClientUseCase,
+                shopUseCase,
                 inventoryService,
                 eventBus);
 
