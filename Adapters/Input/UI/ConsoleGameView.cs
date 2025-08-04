@@ -25,12 +25,13 @@ namespace Bartender.Adapters.Input.UI
                           "[dim]• Satisfaça as preferências dos clientes[/]\n" +
                           "[dim]• Ganhe dinheiro e expanda seu bar[/]\n" +
                           "[dim]• Visite a loja a cada 3 clientes![/]\n" +
-                          "[dim]• Complete 7 dias de trabalho em diferentes locais![/]\n" +
-                          "[dim]• Enfrente clientes misteriosos como chefes![/]"))
+                          "[dim]• Trabalhe 3 dias em cada local (10 rodadas + 1 boss por dia)[/]\n" +
+                          "[dim]• Satisfaça 2 dos 3 bosses para desbloquear novos locais![/]\n" +
+                          "[dim]• Horário de trabalho: 18:00 - 02:00[/]"))
             {
                 Border = BoxBorder.Double,
                 BorderStyle = new Style(Color.Gold1),
-                Header = new PanelHeader(" [bold gold1]?? BEM-VINDO AO BARTENDER GAME[/] "),
+                Header = new PanelHeader(" [bold gold1]?? BEM-VINDO[/] "),
                 Padding = new Padding(2, 1, 2, 1)
             };
             
@@ -52,11 +53,12 @@ namespace Bartender.Adapters.Input.UI
             AnsiConsole.Write(title);
             
             var introPanel = new Panel(
-                new Markup("[bold yellow]??? Escolha onde você quer trabalhar como bartender! ???[/]\n\n" +
+                new Markup("[bold yellow]?? Escolha onde você quer trabalhar como bartender! ??[/]\n\n" +
                           "[dim]Cada local tem suas próprias características:[/]\n" +
                           "[dim]• Bônus e penalidades únicos[/]\n" +
-                          "[dim]• 7 dias de trabalho (semana completa)[/]\n" +
-                          "[dim]• 10 clientes por dia + 1 cliente chefe no último dia[/]"))
+                          "[dim]• 3 dias de trabalho por local[/]\n" +
+                          "[dim]• 10 rodadas + 1 boss por dia[/]\n" +
+                          "[dim]• Satisfaça 2/3 bosses para desbloquear próximo local[/]"))
             {
                 Border = BoxBorder.Double,
                 BorderStyle = new Style(Color.Cyan1),
@@ -153,66 +155,154 @@ namespace Bartender.Adapters.Input.UI
 
         public void DisplayMatchProgress(MatchState matchState)
         {
-            var progressTable = new Table()
-                .Border(TableBorder.Rounded)
-                .BorderColor(Color.Purple)
-                .Title($"[bold purple]?? PROGRESSO - {matchState.GameMode.Name}[/]");
-
-            progressTable.AddColumn(new TableColumn("[bold]Informação[/]").LeftAligned());
-            progressTable.AddColumn(new TableColumn("[bold]Valor[/]").RightAligned());
-
-            progressTable.AddRow("[bold cyan]?? Dia[/]", $"[bold white]{matchState.CurrentDay} / {matchState.GameMode.DaysCount}[/]");
-            progressTable.AddRow("[bold cyan]?? Cliente do Dia[/]", $"[bold white]{matchState.CurrentClientInDay} / {matchState.GameMode.ClientsPerDay}[/]");
+            AnsiConsole.Clear();
             
-            var moneyColor = matchState.TotalMoney >= 100 ? "green" : matchState.TotalMoney >= 50 ? "yellow" : "red";
-            progressTable.AddRow("[bold gold1]?? Dinheiro Total[/]", $"[bold {moneyColor}]${matchState.TotalMoney}[/]");
+            // Header compacto com informações principais
+            var headerTable = new Table()
+                .Border(TableBorder.None)
+                .HideHeaders();
+
+            headerTable.AddColumn(new TableColumn("Col1"));
+            headerTable.AddColumn(new TableColumn("Col2"));
+            headerTable.AddColumn(new TableColumn("Col3"));
+            headerTable.AddColumn(new TableColumn("Col4"));
+
+            // Primeira linha: Estabelecimento e Dia
+            var establishmentInfo = $"[bold cyan]?? {matchState.GameMode.Name}[/]";
+            var dayInfo = $"[bold yellow]?? Dia {matchState.CurrentDay}/{matchState.GameMode.DaysCount}[/]";
             
-            if (matchState.TotalTips > 0)
-            {
-                progressTable.AddRow("[bold yellow]?? Gorjetas[/]", $"[bold yellow]${matchState.TotalTips}[/]");
-            }
+            // Segunda linha: Horário e Rodada
+            var timeInfo = $"[bold green]?? {matchState.CurrentTime}[/]";
+            var roundInfo = matchState.IsBossRound 
+                ? "[bold red]?? BOSS CLIENT[/]" 
+                : $"[bold white]?? Rodada {matchState.CurrentRoundInDay}/{matchState.GameMode.RoundsPerDay}[/]";
 
-            if (matchState.IsBossDay)
-            {
-                progressTable.AddRow("[bold red]?? Status[/]", "[bold red]?? DIA DO CHEFE![/]");
-            }
+            headerTable.AddRow(establishmentInfo, dayInfo, timeInfo, roundInfo);
 
-            AnsiConsole.Write(progressTable);
+            AnsiConsole.Write(headerTable);
+            
+            // Linha separadora
+            var separator = new Rule()
+            {
+                Style = Style.Parse("grey"),
+                Justification = Justify.Center
+            };
+            AnsiConsole.Write(separator);
             AnsiConsole.WriteLine();
+            
+            // Informações de dinheiro (mais compacto)
+            var moneyColor = matchState.TotalMoney >= 200 ? "green" : matchState.TotalMoney >= 100 ? "yellow" : "red";
+            var moneyInfo = $"[bold gold1]?? ${matchState.TotalMoney}[/]   [bold green]?? ${matchState.TotalTips}[/]";
+            
+            AnsiConsole.MarkupLine(moneyInfo);
+            AnsiConsole.WriteLine();
+            
+            // Próximas lojas (só para rodadas normais)
+            if (!matchState.IsBossRound)
+            {
+                var nextShopRounds = new List<int>();
+                for (int i = matchState.CurrentRoundInDay + 1; i <= matchState.GameMode.RoundsPerDay; i++)
+                {
+                    if (i % 3 == 0)
+                        nextShopRounds.Add(i);
+                }
+                
+                if (nextShopRounds.Any())
+                {
+                    var shopInfo = $"[dim]?? Próximas lojas: Rodadas {string.Join(", ", nextShopRounds)}[/]";
+                    AnsiConsole.MarkupLine(shopInfo);
+                    AnsiConsole.WriteLine();
+                }
+            }
+            
+            // Status dos bosses (se houver algum)
+            if (matchState.BossSatisfactionByDay.Any())
+            {
+                var bossStatus = string.Join(" ", matchState.BossSatisfactionByDay.Select((satisfied, index) => 
+                    satisfied ? $"[green]D{index + 1}:?[/]" : $"[red]D{index + 1}:?[/]"));
+                AnsiConsole.MarkupLine($"[dim]?? Bosses: {bossStatus}[/]");
+                AnsiConsole.WriteLine();
+            }
         }
 
         public void DisplayMatchCompleted(MatchState matchState)
         {
             AnsiConsole.Clear();
             
-            var completedTitle = new FigletText("PARTIDA CONCLUIDA")
+            var completedTitle = new FigletText("MATCH COMPLETED")
                 .Centered()
                 .Color(Color.Green);
             
             AnsiConsole.Write(completedTitle);
             
-            var finalScore = matchState.TotalMoney + matchState.TotalTips;
-            var scoreColor = finalScore >= 500 ? "green" : finalScore >= 300 ? "yellow" : finalScore >= 100 ? "orange1" : "red";
-            var performance = finalScore >= 500 ? "?? EXCELENTE!" : 
-                             finalScore >= 300 ? "?? MUITO BOM!" : 
-                             finalScore >= 100 ? "?? BOM!" : "?? PODE MELHORAR!";
+            // Calcular estatísticas
+            int satisfiedBosses = matchState.BossSatisfactionByDay.Count(satisfied => satisfied);
+            bool canUnlock = matchState.CanUnlockNextLocation();
             
-            var resultsPanel = new Panel(
-                new Markup($"[bold white]?? Local:[/] [bold yellow]{matchState.GameMode.Name}[/]\n" +
-                          $"[bold white]?? Dias Trabalhados:[/] [bold cyan]{matchState.GameMode.DaysCount}[/]\n" +
-                          $"[bold white]?? Clientes Atendidos:[/] [bold cyan]{matchState.GetTotalClientsServed()}[/]\n" +
-                          $"[bold white]?? Dinheiro Ganho:[/] [bold {scoreColor}]${matchState.TotalMoney}[/]\n" +
-                          $"[bold white]?? Gorjetas:[/] [bold yellow]${matchState.TotalTips}[/]\n" +
-                          $"[bold white]?? Pontuação Final:[/] [bold {scoreColor}]${finalScore}[/]\n\n" +
-                          $"[bold {scoreColor}]{performance}[/]"))
+            var summaryTable = new Table()
+                .Border(TableBorder.Rounded)
+                .BorderColor(Color.Green)
+                .Title($"[bold green]?? RESUMO - {matchState.GameMode.Name}[/]");
+
+            summaryTable.AddColumn(new TableColumn("[bold]Informação[/]").LeftAligned());
+            summaryTable.AddColumn(new TableColumn("[bold]Resultado[/]").RightAligned());
+
+            summaryTable.AddRow("[bold yellow]?? Local[/]", $"[bold white]{matchState.GameMode.Name}[/]");
+            summaryTable.AddRow("[bold yellow]?? Dias Trabalhados[/]", $"[bold white]{matchState.GameMode.DaysCount}[/]");
+            summaryTable.AddRow("[bold gold1]?? Dinheiro Total[/]", $"[bold green]${matchState.TotalMoney}[/]");
+            summaryTable.AddRow("[bold gold1]?? Gorjetas[/]", $"[bold green]${matchState.TotalTips}[/]");
+            
+            // Status dos bosses
+            var bossStatus = string.Join(" ", matchState.BossSatisfactionByDay.Select((satisfied, index) => 
+                satisfied ? $"[green]Dia {index + 1}: ?[/]" : $"[red]Dia {index + 1}: ?[/]"));
+            summaryTable.AddRow("[bold purple]?? Bosses Satisfeitos[/]", $"[bold white]{satisfiedBosses}/{matchState.GameMode.DaysCount}[/]");
+            summaryTable.AddRow("[bold purple]?? Status Detalhado[/]", bossStatus);
+            
+            // Status de desbloqueio
+            if (canUnlock)
             {
-                Border = BoxBorder.Double,
-                BorderStyle = new Style(Color.Gold1),
-                Header = new PanelHeader(" [bold gold1]?? RESULTADOS FINAIS[/] "),
-                Padding = new Padding(2, 1, 2, 1)
-            };
+                summaryTable.AddRow("[bold green]?? Próximo Local[/]", "[bold green]DESBLOQUEADO! ?[/]");
+            }
+            else
+            {
+                summaryTable.AddRow("[bold red]?? Próximo Local[/]", "[bold red]Bloqueado - Precisa satisfazer 2/3 bosses[/]");
+            }
+
+            AnsiConsole.Write(summaryTable);
+            AnsiConsole.WriteLine();
             
-            AnsiConsole.Write(resultsPanel);
+            // Mensagem final
+            if (canUnlock)
+            {
+                var successPanel = new Panel(
+                    new Markup("[bold green]?? PARABÉNS! ??[/]\n\n" +
+                              "[bold yellow]Você impressionou os clientes VIP![/]\n" +
+                              "[dim]Um novo local de trabalho foi desbloqueado![/]"))
+                {
+                    Border = BoxBorder.Double,
+                    BorderStyle = new Style(Color.Green),
+                    Header = new PanelHeader(" [bold green]?? SUCESSO[/] "),
+                    Padding = new Padding(2, 1, 2, 1)
+                };
+                
+                AnsiConsole.Write(successPanel);
+            }
+            else
+            {
+                var failPanel = new Panel(
+                    new Markup("[bold yellow]?? CONTINUE TENTANDO! ??[/]\n\n" +
+                              "[bold red]Você precisa satisfazer pelo menos 2 dos 3 bosses[/]\n" +
+                              "[dim]para desbloquear o próximo local.[/]\n\n" +
+                              "[dim]Tente novamente neste local ou escolha outro![/]"))
+                {
+                    Border = BoxBorder.Double,
+                    BorderStyle = new Style(Color.Yellow),
+                    Header = new PanelHeader(" [bold yellow]?? QUASE LÁ[/] "),
+                    Padding = new Padding(2, 1, 2, 1)
+                };
+                
+                AnsiConsole.Write(failPanel);
+            }
             
             AnsiConsole.WriteLine();
             AnsiConsole.Markup("[bold cyan]Pressione qualquer tecla para continuar...[/]");
@@ -223,61 +313,31 @@ namespace Bartender.Adapters.Input.UI
         {
             AnsiConsole.Clear();
             
-            // Título dramático para o chefe
-            var bossTitle = new FigletText("CLIENTE CHEFE")
+            var bossTitle = new FigletText("BOSS CLIENT")
                 .Centered()
                 .Color(Color.Red);
             
             AnsiConsole.Write(bossTitle);
             
-            // Aviso especial
-            var warningPanel = new Panel(
-                new Markup("[bold red]?? ATENÇÃO! ??[/]\n\n" +
-                          "[bold yellow]Um cliente misterioso apareceu![/]\n" +
-                          "[dim]Este é o último cliente do dia e o mais importante...[/]\n" +
-                          "[dim]Ele não revela diretamente o que deseja - preste atenção às pistas![/]"))
+            var bossPanel = new Panel(
+                new Markup($"[bold red]?? CLIENTE ESPECIAL CHEGOU! ??[/]\n\n" +
+                          $"[bold yellow]Nome:[/] [bold white]{bossClient.Name}[/]\n\n" +
+                          $"[bold yellow]Pistas:[/]\n" +
+                          $"[dim]?? \"{string.Join("\"", bossClient.Clues.Take(1))}\"[/]\n\n" +
+                          $"[bold red]??  Este é um cliente muito especial![/]\n" +
+                          $"[dim]Se ele ficar satisfeito, você ganhará um bônus amanhã![/]"))
             {
                 Border = BoxBorder.Double,
                 BorderStyle = new Style(Color.Red),
-                Header = new PanelHeader(" [bold red]?? CLIENTE ESPECIAL[/] "),
+                Header = new PanelHeader(" [bold red]?? CLIENTE VIP[/] "),
                 Padding = new Padding(2, 1, 2, 1)
             };
             
-            AnsiConsole.Write(warningPanel);
+            AnsiConsole.Write(bossPanel);
             AnsiConsole.WriteLine();
             
-            // Nome e fala do chefe
-            var bossHeader = new Rule($"[bold red]?? CLIENTE MISTERIOSO: {bossClient.Name.ToUpper()}[/]")
-            {
-                Style = Style.Parse("red"),
-                Justification = Justify.Center
-            };
-            
-            AnsiConsole.Write(bossHeader);
-            AnsiConsole.WriteLine();
-            
-            var bossSpeech = new Panel(
-                new Markup($"[italic bold white]{bossClient.GetOrderMessage()}[/]"))
-            {
-                Border = BoxBorder.Rounded,
-                BorderStyle = new Style(Color.Red),
-                Header = new PanelHeader(" [bold red]?? PISTA MISTERIOSA[/] "),
-                Padding = new Padding(2, 1, 2, 1)
-            };
-            
-            AnsiConsole.Write(bossSpeech);
-            
-            var hintPanel = new Panel(
-                new Markup("[bold yellow]?? DICA:[/] [dim]Analise as palavras do cliente para descobrir\n" +
-                          "que tipo de drink ele realmente deseja![/]"))
-            {
-                Border = BoxBorder.Rounded,
-                BorderStyle = new Style(Color.Yellow),
-                Padding = new Padding(1, 0, 1, 0)
-            };
-            
-            AnsiConsole.Write(hintPanel);
-            AnsiConsole.WriteLine();
+            AnsiConsole.Markup("[bold cyan]Pressione qualquer tecla para continuar...[/]");
+            Console.ReadKey();
         }
 
         public void DisplayClientArrival(Client client)
@@ -289,7 +349,8 @@ namespace Bartender.Adapters.Input.UI
                 return;
             }
             
-            AnsiConsole.Clear();
+            // NÃO limpar a tela para preservar as informações de progresso
+            // AnsiConsole.Clear(); -- REMOVIDO
             
             // Header do cliente
             var clientHeader = new Rule($"[bold yellow]?? CLIENTE: {client.Name.ToUpper()}[/]")
@@ -307,7 +368,7 @@ namespace Bartender.Adapters.Input.UI
             {
                 Border = BoxBorder.Rounded,
                 BorderStyle = new Style(Color.Blue),
-                Header = new PanelHeader(" [bold blue]?? Pedido[/] "),
+                Header = new PanelHeader(" [bold blue]??? Pedido[/] "),
                 Padding = new Padding(2, 1, 2, 1)
             };
             
@@ -759,6 +820,123 @@ namespace Bartender.Adapters.Input.UI
                 "mentolado" => "cyan1",
                 _ => "white"
             };
+        }
+
+        public void DisplayDayCompleted(MatchState matchState, bool bossWasSatisfied)
+        {
+            AnsiConsole.Clear();
+            
+            var dayCompletedTitle = new FigletText("FIM DO DIA")
+                .Centered()
+                .Color(Color.Gold1);
+            
+            AnsiConsole.Write(dayCompletedTitle);
+            
+            // Resumo do dia
+            var dayResultsTable = new Table()
+                .Border(TableBorder.Rounded)
+                .BorderColor(Color.Cyan1)
+                .Title($"[bold cyan1]?? RESUMO DO DIA {matchState.CurrentDay} - {matchState.GameMode.Name}[/]");
+
+            dayResultsTable.AddColumn(new TableColumn("[bold]Informação[/]").LeftAligned());
+            dayResultsTable.AddColumn(new TableColumn("[bold]Resultado[/]").RightAligned());
+
+            // Informações do dia
+            dayResultsTable.AddRow("[bold yellow]?? Local[/]", $"[bold white]{matchState.GameMode.Name}[/]");
+            dayResultsTable.AddRow("[bold yellow]?? Dia Concluído[/]", $"[bold white]{matchState.CurrentDay}/{matchState.GameMode.DaysCount}[/]");
+            dayResultsTable.AddRow("[bold yellow]?? Horário Final[/]", $"[bold white]02:00 (Fechamento)[/]");
+            dayResultsTable.AddRow("[bold yellow]?? Rodadas Completas[/]", $"[bold white]10 + 1 Boss[/]");
+            
+            // Status do Boss
+            if (bossWasSatisfied)
+            {
+                dayResultsTable.AddRow("[bold green]?? Cliente VIP[/]", "[bold green]SATISFEITO ?[/]");
+                
+                // Mostrar bônus se não for o último dia
+                if (matchState.CurrentDay < matchState.GameMode.DaysCount)
+                {
+                    dayResultsTable.AddRow("[bold gold1]?? Bônus Amanhã[/]", "[bold yellow]Sim! +5% nos pagamentos[/]");
+                }
+            }
+            else
+            {
+                dayResultsTable.AddRow("[bold red]?? Cliente VIP[/]", "[bold red]INSATISFEITO ?[/]");
+                dayResultsTable.AddRow("[bold gray]?? Bônus Amanhã[/]", "[bold gray]Nenhum[/]");
+            }
+            
+            // Dinheiro atual
+            var moneyColor = matchState.TotalMoney >= 200 ? "green" : matchState.TotalMoney >= 100 ? "yellow" : "red";
+            dayResultsTable.AddRow("[bold gold1]?? Dinheiro Total[/]", $"[bold {moneyColor}]${matchState.TotalMoney}[/]");
+            dayResultsTable.AddRow("[bold gold1]?? Gorjetas[/]", $"[bold green]${matchState.TotalTips}[/]");
+
+            AnsiConsole.Write(dayResultsTable);
+            AnsiConsole.WriteLine();
+            
+            // Progresso dos bosses até agora
+            if (matchState.BossSatisfactionByDay.Any())
+            {
+                var bossProgressTable = new Table()
+                    .Border(TableBorder.Rounded)
+                    .BorderColor(Color.Purple)
+                    .Title("[bold purple]?? PROGRESSO DOS BOSSES[/]");
+
+                bossProgressTable.AddColumn(new TableColumn("[bold]Dia[/]").Centered());
+                bossProgressTable.AddColumn(new TableColumn("[bold]Status[/]").Centered());
+
+                for (int i = 0; i < matchState.BossSatisfactionByDay.Count; i++)
+                {
+                    var day = i + 1;
+                    var satisfied = matchState.BossSatisfactionByDay[i];
+                    var status = satisfied ? "[bold green]? Satisfeito[/]" : "[bold red]? Insatisfeito[/]";
+                    bossProgressTable.AddRow($"[bold white]Dia {day}[/]", status);
+                }
+
+                AnsiConsole.Write(bossProgressTable);
+                AnsiConsole.WriteLine();
+            }
+            
+            // Mensagem final baseada no status
+            if (matchState.CurrentDay < matchState.GameMode.DaysCount)
+            {
+                // Ainda há dias restantes
+                var nextDayPanel = new Panel(
+                    new Markup($"[bold yellow]?? PRÓXIMO DIA[/]\n\n" +
+                              $"[bold white]Dia {matchState.CurrentDay + 1} de {matchState.GameMode.DaysCount}[/]\n" +
+                              $"[dim]Horário: 18:00 - 02:00[/]\n" +
+                              $"[dim]10 rodadas + 1 cliente VIP[/]\n\n" +
+                              (bossWasSatisfied ? "[bold green]Com bônus de satisfação do cliente VIP![/]" : "")))
+                {
+                    Border = BoxBorder.Double,
+                    BorderStyle = new Style(Color.Gold1),
+                    Header = new PanelHeader(" [bold gold1]??? CONTINUAR TRABALHANDO[/] "),
+                    Padding = new Padding(2, 1, 2, 1)
+                };
+                
+                AnsiConsole.Write(nextDayPanel);
+                AnsiConsole.WriteLine();
+                AnsiConsole.Markup("[bold cyan]Pressione qualquer tecla para ir para o próximo dia...[/]");
+            }
+            else
+            {
+                // Último dia - trabalho no local terminou
+                var completedPanel = new Panel(
+                    new Markup($"[bold gold1]?? TRABALHO CONCLUÍDO![/]\n\n" +
+                              $"[bold white]Você completou os 3 dias em {matchState.GameMode.Name}[/]\n" +
+                              $"[dim]Agora você pode escolher um novo local de trabalho[/]\n\n" +
+                              $"[bold purple]Status final: {matchState.BossSatisfactionByDay.Count(s => s)}/3 bosses satisfeitos[/]"))
+                {
+                    Border = BoxBorder.Double,
+                    BorderStyle = new Style(Color.Green),
+                    Header = new PanelHeader(" [bold green]? LOCAL FINALIZADO[/] "),
+                    Padding = new Padding(2, 1, 2, 1)
+                };
+                
+                AnsiConsole.Write(completedPanel);
+                AnsiConsole.WriteLine();
+                AnsiConsole.Markup("[bold cyan]Pressione qualquer tecla para ver o resumo final...[/]");
+            }
+            
+            Console.ReadKey();
         }
     }
 }

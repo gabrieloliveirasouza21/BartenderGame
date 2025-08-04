@@ -9,5 +9,7 @@ namespace Bartender.GameCore.Domain.Interfaces
         MatchState CreateNewMatch(string gameModeId);
         void ApplyStartingModifiers(MatchState matchState, IInventoryService inventoryService);
         PaymentResult ApplyPaymentModifiers(MatchState matchState, PaymentResult basePayment, ClientReaction reaction);
+        void UnlockNextLocation(MatchState completedMatch);
+        string GetBossBonus(MatchState matchState, int dayNumber);
     }
 }

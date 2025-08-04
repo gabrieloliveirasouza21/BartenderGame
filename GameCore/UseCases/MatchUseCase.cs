@@ -43,6 +43,13 @@ namespace Bartender.GameCore.UseCases
                 throw new InvalidOperationException("Nenhuma partida ativa para finalizar.");
 
             var matchState = gameState.CurrentMatch;
+            
+            // Verificar se pode desbloquear próximo local
+            if (matchState.CanUnlockNextLocation())
+            {
+                _gameModeService.UnlockNextLocation(matchState);
+            }
+            
             gameState.EndMatch();
             
             // Publicar evento de fim de partida

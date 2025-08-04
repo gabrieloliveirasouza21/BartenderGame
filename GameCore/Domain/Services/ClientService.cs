@@ -43,11 +43,10 @@ namespace Bartender.GameCore.Domain.Services
             return _bossClientService.GetMysteriousClient();
         }
 
-        public Client GetClientForMatch(MatchState matchState, int clientNumber)
+        public Client GetClientForMatch(MatchState matchState, int roundNumber)
         {
-            // Se é o último cliente do último dia, retorna o chefe
-            if (matchState.CurrentDay == matchState.GameMode.DaysCount && 
-                clientNumber == matchState.GameMode.ClientsPerDay)
+            // Se é a rodada do boss (11ª rodada de cada dia), retorna o chefe
+            if (matchState.IsBossRound)
             {
                 return GetBossClient();
             }

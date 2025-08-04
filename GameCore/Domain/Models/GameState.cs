@@ -12,6 +12,7 @@ namespace Bartender.GameCore.Domain.Models
         // Novos campos para sistema de partidas
         public MatchState? CurrentMatch { get; private set; }
         public bool IsInMatch => CurrentMatch != null && !CurrentMatch.IsCompleted;
+        public string? CurrentBossBonus { get; private set; }
 
         // Propriedade para compatibilidade com código existente
         public int Score => Money;
@@ -23,6 +24,7 @@ namespace Bartender.GameCore.Domain.Models
             TotalTipsEarned = 0;
             IsRoundActive = false;
             CurrentMatch = null;
+            CurrentBossBonus = null;
         }
 
         public void StartNewMatch(MatchState matchState)
@@ -32,6 +34,7 @@ namespace Bartender.GameCore.Domain.Models
             CurrentRound = 1;
             Money = 0;
             TotalTipsEarned = 0;
+            CurrentBossBonus = null;
         }
 
         public void StartNewRound(Client client)
@@ -55,7 +58,7 @@ namespace Bartender.GameCore.Domain.Models
             PreparedDrink = null;
             
             // Atualizar o estado da partida
-            CurrentMatch?.NextClient();
+            CurrentMatch?.NextRound();
         }
 
         public void AddMoney(int amount)
@@ -90,10 +93,20 @@ namespace Bartender.GameCore.Domain.Models
         public bool ShouldOpenShop()
         {
             if (CurrentMatch != null)
-                return CurrentMatch.ShouldOpenShop();
+                return CurrentMatch.IsShopRound;
             
             // Fallback para código legado
             return CurrentRound > 1 && (CurrentRound - 1) % 3 == 0;
+        }
+
+        public void RecordBossSatisfaction(bool wasSatisfied)
+        {
+            CurrentMatch?.RecordBossSatisfaction(wasSatisfied);
+        }
+
+        public void SetBossBonus(string bonus)
+        {
+            CurrentBossBonus = bonus;
         }
 
         // Método para compatibilidade com código existente
@@ -108,6 +121,7 @@ namespace Bartender.GameCore.Domain.Models
             {
                 // Salvar estatísticas da partida se necessário
                 CurrentMatch = null;
+                CurrentBossBonus = null;
             }
         }
     }

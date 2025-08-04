@@ -7,10 +7,11 @@ namespace Bartender.GameCore.Domain.Models
         public string Id { get; }
         public string Name { get; }
         public string Description { get; }
-        public bool IsUnlocked { get; }
+        public bool IsUnlocked { get; private set; }
         public List<GameModeModifier> Modifiers { get; }
-        public int DaysCount { get; } = 7; // Cada partida tem 7 dias
-        public int ClientsPerDay { get; } = 10; // 10 clientes por dia
+        public int DaysCount { get; } = 3; // Cada local tem 3 dias de trabalho
+        public int RoundsPerDay { get; } = 10; // 10 rodadas por dia + 1 boss
+        public string WorkingHours => "18:00 - 02:00"; // Horário de trabalho
 
         public GameMode(string id, string name, string description, bool isUnlocked, List<GameModeModifier> modifiers)
         {
@@ -19,6 +20,11 @@ namespace Bartender.GameCore.Domain.Models
             Description = description;
             IsUnlocked = isUnlocked;
             Modifiers = modifiers ?? new List<GameModeModifier>();
+        }
+
+        public void Unlock()
+        {
+            IsUnlocked = true;
         }
     }
 }

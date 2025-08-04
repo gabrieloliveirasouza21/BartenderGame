@@ -70,6 +70,13 @@ namespace Bartender.Adapters.Input.UI
                             _gameView.DisplayMatchProgress(matchState);
                             
                             var client = _gameLoopUseCase.StartNewRound();
+                            
+                            // Se é um boss client, mostrar tela especial
+                            if (client is BossClient bossClient)
+                            {
+                                _gameView.DisplayBossClientArrival(bossClient);
+                            }
+                            
                             _gameView.DisplayClientArrival(client);
 
                             var availableIngredients = _inventoryService.GetAvailableIngredients();
@@ -99,8 +106,20 @@ namespace Bartender.Adapters.Input.UI
                                     var reaction = _serveClientUseCase.Execute(client, gameState.PreparedDrink);
                                     _gameLoopUseCase.CompleteRound(reaction);
                                     
-                                    // Check if shop should open
-                                    if (gameState.ShouldOpenShop())
+                                    // Se foi um boss client e completou a rodada, mostrar tela de fim de dia
+                                    if (client is BossClient && gameState.CurrentMatch != null)
+                                    {
+                                        bool bossWasSatisfied = reaction == ClientReaction.VeryHappy || reaction == ClientReaction.Happy;
+                                        
+                                        // Se não é o último dia da partida, mostrar tela de fim de dia
+                                        if (!gameState.CurrentMatch.IsCompleted)
+                                        {
+                                            _gameView.DisplayDayCompleted(gameState.CurrentMatch, bossWasSatisfied);
+                                        }
+                                    }
+                                    
+                                    // Check if shop should open (para clientes normais)
+                                    if (!(client is BossClient) && gameState.ShouldOpenShop())
                                     {
                                         OpenShop(gameState);
                                     }

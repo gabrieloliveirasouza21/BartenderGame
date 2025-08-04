@@ -38,7 +38,7 @@ namespace Bartender.GameCore.UseCases
             if (_gameState.IsInMatch && _gameState.CurrentMatch != null)
             {
                 // Usar o sistema de partidas para determinar o cliente
-                client = _clientService.GetClientForMatch(_gameState.CurrentMatch, _gameState.CurrentMatch.CurrentClientInDay);
+                client = _clientService.GetClientForMatch(_gameState.CurrentMatch, _gameState.CurrentMatch.CurrentRoundInDay);
                 
                 // Se é um cliente chefe, publicar evento especial
                 if (client is BossClient bossClient)
@@ -81,39 +81,33 @@ namespace Bartender.GameCore.UseCases
             
             _gameState.ProcessPayment(paymentResult);
 
-            // Publica evento de pagamento processado
-            if (_gameState.CurrentClient != null && _gameState.PreparedDrink != null)
+            // Se foi um boss client, registrar satisfação
+            if (_gameState.CurrentClient is BossClient && _gameState.CurrentMatch != null)
             {
-                _eventBus.Publish(new PaymentProcessedEvent(_gameState.CurrentClient, _gameState.PreparedDrink, paymentResult));
+                bool wasSatisfied = reaction == ClientReaction.VeryHappy || reaction == ClientReaction.Happy;
+                _gameState.RecordBossSatisfaction(wasSatisfied);
+                
+                // Se boss ficou satisfeito, aplicar bônus no próximo dia
+                if (wasSatisfied && _gameState.CurrentMatch.CurrentDay < _gameState.CurrentMatch.GameMode.DaysCount)
+                {
+                    var bonus = _gameModeService.GetBossBonus(_gameState.CurrentMatch, _gameState.CurrentMatch.CurrentDay);
+                    _gameState.SetBossBonus(bonus);
+                }
             }
 
-            _gameState.CompleteRound(0); // Agora passamos 0 porque o pagamento já foi processado
-            
+            // Publica evento de pagamento processado
+            _eventBus.Publish(new PaymentProcessedEvent(_gameState.CurrentClient!, _gameState.PreparedDrink!, paymentResult));
+
+            // Completa a rodada
+            _gameState.CompleteRound(paymentResult.TotalAmount);
+
+            // Publica evento de rodada completada
             _eventBus.Publish(new GameRoundCompletedEvent(_gameState.CurrentRound - 1));
         }
 
-        public virtual GameState GetGameState()
+        public GameState GetGameState()
         {
             return _gameState;
-        }
-
-        public virtual bool IsMatchCompleted()
-        {
-            return _gameState.CurrentMatch?.IsCompleted ?? false;
-        }
-
-        // Método mantido para compatibilidade com testes existentes
-        private int CalculateScoreChange(ClientReaction reaction)
-        {
-            return reaction switch
-            {
-                ClientReaction.VeryHappy => 100,
-                ClientReaction.Happy => 75,
-                ClientReaction.Neutral => 50,
-                ClientReaction.Disappointed => 25,
-                ClientReaction.Angry => 0,
-                _ => 0
-            };
         }
     }
 }

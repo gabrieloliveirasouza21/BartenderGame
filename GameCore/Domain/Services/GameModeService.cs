@@ -32,6 +32,19 @@ namespace Bartender.GameCore.Domain.Services
             return new MatchState(gameMode);
         }
 
+        public void UnlockNextLocation(MatchState completedMatch)
+        {
+            if (!completedMatch.CanUnlockNextLocation())
+                return;
+
+            // Encontra o próximo local bloqueado na lista
+            var nextLockedGameMode = _gameModes.FirstOrDefault(gm => !gm.IsUnlocked);
+            if (nextLockedGameMode != null)
+            {
+                nextLockedGameMode.Unlock();
+            }
+        }
+
         public void ApplyStartingModifiers(MatchState matchState, IInventoryService inventoryService)
         {
             foreach (var modifier in matchState.GameMode.Modifiers)
@@ -76,6 +89,25 @@ namespace Bartender.GameCore.Domain.Services
             );
         }
 
+        public string GetBossBonus(MatchState matchState, int dayNumber)
+        {
+            if (dayNumber < 1 || dayNumber > matchState.BossSatisfactionByDay.Count)
+                return "";
+
+            if (matchState.BossSatisfactionByDay[dayNumber - 1])
+            {
+                return matchState.GameMode.Id switch
+                {
+                    "cafe_local" => "O cliente VIP recomendou os drinks! Clientes pagam 5% a mais hoje.",
+                    "bar_noturno" => "O cliente VIP ficou impressionado! Gorjetas aumentaram em 10% hoje.",
+                    "hotel_luxo" => "O cliente VIP deixou uma avaliação 5 estrelas! Pagamentos aumentaram em 15% hoje.",
+                    _ => "O cliente VIP ficou satisfeito! Bônus de 5% nos pagamentos hoje."
+                };
+            }
+
+            return "";
+        }
+
         private bool IsPositiveReaction(ClientReaction reaction)
         {
             return reaction == ClientReaction.VeryHappy || reaction == ClientReaction.Happy;
@@ -94,7 +126,7 @@ namespace Bartender.GameCore.Domain.Services
                 new GameMode(
                     "cafe_local",
                     "? Café Local",
-                    "Um café aconchegante no centro da cidade. Perfeito para iniciantes!",
+                    "Um café aconchegante no centro da cidade. Perfeito para iniciantes!\nHorário: 18:00 - 02:00 | 3 dias de trabalho",
                     true,
                     new List<GameModeModifier>
                     {
@@ -109,7 +141,7 @@ namespace Bartender.GameCore.Domain.Services
                 new GameMode(
                     "bar_noturno",
                     "?? Bar Noturno",
-                    "Um bar sofisticado onde os clientes são mais exigentes.",
+                    "Um bar sofisticado onde os clientes são mais exigentes.\nHorário: 18:00 - 02:00 | 3 dias de trabalho",
                     false,
                     new List<GameModeModifier>
                     {
@@ -124,7 +156,7 @@ namespace Bartender.GameCore.Domain.Services
                 new GameMode(
                     "hotel_luxo",
                     "?? Hotel de Luxo",
-                    "Um hotel 5 estrelas com clientes muito sofisticados.",
+                    "Um hotel 5 estrelas com clientes muito sofisticados.\nHorário: 18:00 - 02:00 | 3 dias de trabalho",
                     false,
                     new List<GameModeModifier>
                     {

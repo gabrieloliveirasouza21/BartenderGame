@@ -28,5 +28,6 @@ namespace Bartender.Adapters.Input.UI.Interfaces
         void DisplayMatchProgress(MatchState matchState);
         void DisplayMatchCompleted(MatchState matchState);
         void DisplayBossClientArrival(BossClient bossClient);
+        void DisplayDayCompleted(MatchState matchState, bool bossWasSatisfied);
     }
 }
