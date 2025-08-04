@@ -7,11 +7,10 @@ namespace Bartender.Adapters.Input.UI.Interfaces
     {
         void DisplayWelcomeMessage();
         void DisplayClientArrival(Client client);
-        void DisplayAvailableIngredients(List<Ingredient> ingredients);
         void DisplayAvailableIngredients(List<Ingredient> ingredients, IInventoryService inventoryService);
         List<Ingredient> GetSelectedIngredients(List<Ingredient> availableIngredients);
         bool ConfirmServeDrink(Drink drink);
-        void DisplayClientReaction(string reactionMessage);
+        void DisplayClientReaction(string message);
         void DisplayPaymentResult(PaymentResult paymentResult);
         void DisplayGameScore(int score, int round);
         bool AskToContinue();
@@ -19,9 +18,15 @@ namespace Bartender.Adapters.Input.UI.Interfaces
         
         // Shop methods
         void DisplayShopOpening();
-        void DisplayShopItems(List<ShopItem> items, int playerMoney);
+        void DisplayShopItems(List<ShopItem> items, int currentMoney);
         ShopItem? GetSelectedShopItem(List<ShopItem> items);
         void DisplayPurchaseResult(bool success, ShopItem item, int remainingMoney);
         bool AskToContinueShopping();
+        
+        // New methods for match system
+        GameMode? DisplayGameModeSelection(List<GameMode> gameModes);
+        void DisplayMatchProgress(MatchState matchState);
+        void DisplayMatchCompleted(MatchState matchState);
+        void DisplayBossClientArrival(BossClient bossClient);
     }
 }

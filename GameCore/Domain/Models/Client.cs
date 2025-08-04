@@ -10,5 +10,10 @@
             Name = name;
             DesiredEffect = desiredEffect;
         }
+
+        public virtual string GetOrderMessage()
+        {
+            return $"Olá! Eu gostaria de algo {DesiredEffect}, por favor.";
+        }
     }
 }

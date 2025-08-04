@@ -10,5 +10,7 @@ namespace Bartender.GameCore.Domain.Interfaces
     public interface IClientService
     {
         Client GetNextClient();
+        Client GetBossClient();
+        Client GetClientForMatch(MatchState matchState, int clientNumber);
     }
 }

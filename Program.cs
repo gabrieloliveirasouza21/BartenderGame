@@ -24,17 +24,20 @@ namespace Bartender
             var recipeBook = new RecipeBook();
             var craftService = new CraftService(recipeBook);
             var inventoryService = new InventoryService(initialInventory);
-            var clientService = new ClientService();
+            var bossClientService = new BossClientService();
+            var clientService = new ClientService(bossClientService);
             var paymentService = new PaymentService();
             var shopService = new ShopService(inventoryService);
+            var gameModeService = new GameModeService();
             var eventBus = new EventBus();
             var gameState = new GameState();
 
             // Inicialização dos casos de uso
             var prepareDrinkUseCase = new PrepareDrinkUseCase(craftService, inventoryService, eventBus);
             var serveClientUseCase = new ServeClientUseCase(eventBus);
-            var gameLoopUseCase = new GameLoopUseCase(clientService, paymentService, eventBus, gameState);
+            var gameLoopUseCase = new GameLoopUseCase(clientService, paymentService, eventBus, gameState, gameModeService);
             var shopUseCase = new ShopUseCase(shopService, eventBus);
+            var matchUseCase = new MatchUseCase(gameModeService, inventoryService, eventBus);
 
             // Inicialização da camada de apresentação
             var gameView = new ConsoleGameView();
@@ -44,6 +47,7 @@ namespace Bartender
                 prepareDrinkUseCase,
                 serveClientUseCase,
                 shopUseCase,
+                matchUseCase,
                 inventoryService,
                 eventBus);
 

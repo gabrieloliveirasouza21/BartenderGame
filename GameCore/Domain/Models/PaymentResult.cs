@@ -16,6 +16,16 @@ namespace Bartender.GameCore.Domain.Models
             Status = status;
             PaymentMessage = paymentMessage;
         }
+
+        // Construtor adicional para quando TotalAmount já foi calculado (para modificadores)
+        public PaymentResult(int baseAmount, int tipAmount, int totalAmount, PaymentStatus status, string paymentMessage)
+        {
+            BaseAmount = baseAmount;
+            TipAmount = tipAmount;
+            TotalAmount = totalAmount;
+            Status = status;
+            PaymentMessage = paymentMessage;
+        }
     }
 
     public enum PaymentStatus

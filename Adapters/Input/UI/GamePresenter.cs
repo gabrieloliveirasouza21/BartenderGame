@@ -14,6 +14,7 @@ namespace Bartender.Adapters.Input.UI
         private readonly PrepareDrinkUseCase _prepareDrinkUseCase;
         private readonly ServeClientUseCase _serveClientUseCase;
         private readonly ShopUseCase _shopUseCase;
+        private readonly MatchUseCase _matchUseCase;
         private readonly IInventoryService _inventoryService;
         private readonly EventBus _eventBus;
 
@@ -23,6 +24,7 @@ namespace Bartender.Adapters.Input.UI
             PrepareDrinkUseCase prepareDrinkUseCase,
             ServeClientUseCase serveClientUseCase,
             ShopUseCase shopUseCase,
+            MatchUseCase matchUseCase,
             IInventoryService inventoryService,
             EventBus eventBus)
         {
@@ -31,6 +33,7 @@ namespace Bartender.Adapters.Input.UI
             _prepareDrinkUseCase = prepareDrinkUseCase;
             _serveClientUseCase = serveClientUseCase;
             _shopUseCase = shopUseCase;
+            _matchUseCase = matchUseCase;
             _inventoryService = inventoryService;
             _eventBus = eventBus;
 
@@ -46,51 +49,85 @@ namespace Bartender.Adapters.Input.UI
             {
                 try
                 {
-                    var client = _gameLoopUseCase.StartNewRound();
-                    _gameView.DisplayClientArrival(client);
-
-                    var availableIngredients = _inventoryService.GetAvailableIngredients();
-                    _gameView.DisplayAvailableIngredients(availableIngredients, _inventoryService);
-
-                    var selectedIngredients = _gameView.GetSelectedIngredients(availableIngredients);
-
-                    if (selectedIngredients.Count == 0)
+                    // Seleção do modo de jogo/partida
+                    var selectedGameMode = SelectGameMode();
+                    if (selectedGameMode == null)
                     {
-                        Console.WriteLine("Nenhum ingrediente selecionado. Tente novamente.");
-                        continue;
+                        break; // Jogador escolheu sair
                     }
 
-                    if (!_inventoryService.HasIngredients(selectedIngredients))
-                    {
-                        Console.WriteLine("Ingredientes insuficientes!");
-                        continue;
-                    }
-
-                    _prepareDrinkUseCase.Execute(selectedIngredients);
-                    
+                    // Iniciar nova partida
                     var gameState = _gameLoopUseCase.GetGameState();
-                    if (gameState.PreparedDrink != null)
+                    var matchState = _matchUseCase.StartNewMatch(selectedGameMode.Id, gameState);
+                    
+                    // Loop principal da partida
+                    bool matchRunning = true;
+                    while (matchRunning && !matchState.IsCompleted)
                     {
-                        bool confirmServe = _gameView.ConfirmServeDrink(gameState.PreparedDrink);
-                        if (confirmServe)
+                        try
                         {
-                            var reaction = _serveClientUseCase.Execute(client, gameState.PreparedDrink);
-                            _gameLoopUseCase.CompleteRound(reaction);
+                            // Mostrar progresso da partida
+                            _gameView.DisplayMatchProgress(matchState);
                             
-                            // Check if shop should open
-                            if (gameState.ShouldOpenShop())
+                            var client = _gameLoopUseCase.StartNewRound();
+                            _gameView.DisplayClientArrival(client);
+
+                            var availableIngredients = _inventoryService.GetAvailableIngredients();
+                            _gameView.DisplayAvailableIngredients(availableIngredients, _inventoryService);
+
+                            var selectedIngredients = _gameView.GetSelectedIngredients(availableIngredients);
+
+                            if (selectedIngredients.Count == 0)
                             {
-                                OpenShop(gameState);
+                                Console.WriteLine("Nenhum ingrediente selecionado. Tente novamente.");
+                                continue;
                             }
+
+                            if (!_inventoryService.HasIngredients(selectedIngredients))
+                            {
+                                Console.WriteLine("Ingredientes insuficientes!");
+                                continue;
+                            }
+
+                            _prepareDrinkUseCase.Execute(selectedIngredients);
                             
-                            _gameView.DisplayGameScore(gameState.Score, gameState.CurrentRound);
-                            gameRunning = _gameView.AskToContinue();
+                            if (gameState.PreparedDrink != null)
+                            {
+                                bool confirmServe = _gameView.ConfirmServeDrink(gameState.PreparedDrink);
+                                if (confirmServe)
+                                {
+                                    var reaction = _serveClientUseCase.Execute(client, gameState.PreparedDrink);
+                                    _gameLoopUseCase.CompleteRound(reaction);
+                                    
+                                    // Check if shop should open
+                                    if (gameState.ShouldOpenShop())
+                                    {
+                                        OpenShop(gameState);
+                                    }
+                                    
+                                    // Verificar se a partida foi completada
+                                    if (matchState.IsCompleted)
+                                    {
+                                        _gameView.DisplayMatchCompleted(matchState);
+                                        _matchUseCase.EndMatch(gameState);
+                                        matchRunning = false;
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Drink não foi servido. Tente novamente.");
+                                }
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            Console.WriteLine("Drink não foi servido. Tente novamente.");
+                            Console.WriteLine($"Erro durante a partida: {ex.Message}");
+                            matchRunning = _gameView.AskToContinue();
                         }
                     }
+                    
+                    // Perguntar se quer continuar jogando (nova partida)
+                    gameRunning = _gameView.AskToContinue();
                 }
                 catch (Exception ex)
                 {
@@ -100,6 +137,12 @@ namespace Bartender.Adapters.Input.UI
             }
 
             _gameView.DisplayGameOver();
+        }
+
+        private GameMode? SelectGameMode()
+        {
+            var availableGameModes = _matchUseCase.GetAvailableGameModes();
+            return _gameView.DisplayGameModeSelection(availableGameModes);
         }
 
         private void OpenShop(GameState gameState)
@@ -148,6 +191,9 @@ namespace Bartender.Adapters.Input.UI
             _eventBus.Subscribe<PaymentProcessedEvent>(OnPaymentProcessed);
             _eventBus.Subscribe<ItemPurchasedEvent>(OnItemPurchased);
             _eventBus.Subscribe<ShopOpenedEvent>(OnShopOpened);
+            _eventBus.Subscribe<MatchStartedEvent>(OnMatchStarted);
+            _eventBus.Subscribe<MatchCompletedEvent>(OnMatchCompleted);
+            _eventBus.Subscribe<BossClientArrivedEvent>(OnBossClientArrived);
         }
 
         private void OnDrinkPrepared(IEvent eventData)
@@ -177,6 +223,24 @@ namespace Bartender.Adapters.Input.UI
         private void OnShopOpened(IEvent eventData)
         {
             var shopEvent = (ShopOpenedEvent)eventData;
+            // Additional logging or processing can be added here
+        }
+
+        private void OnMatchStarted(IEvent eventData)
+        {
+            var matchEvent = (MatchStartedEvent)eventData;
+            // Additional logging or processing can be added here
+        }
+
+        private void OnMatchCompleted(IEvent eventData)
+        {
+            var matchEvent = (MatchCompletedEvent)eventData;
+            // Additional logging or processing can be added here
+        }
+
+        private void OnBossClientArrived(IEvent eventData)
+        {
+            var bossEvent = (BossClientArrivedEvent)eventData;
             // Additional logging or processing can be added here
         }
     }
