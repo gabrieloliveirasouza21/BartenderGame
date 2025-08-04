@@ -25,12 +25,30 @@ namespace Bartender.GameCore.Domain.Services
                 .Where(item => item.Type == ShopItemType.NewIngredient && !_purchasedNewIngredients.Contains(item.Name));
             availableItems.AddRange(newIngredientsAvailable);
             
-            // Adiciona reposição de ingredientes existentes
+            // Adiciona reposição de ingredientes existentes (originais do jogo)
             foreach (var item in _shopItems.Where(item => item.Type == ShopItemType.IngredientRestock))
             {
                 if (_inventoryService.GetIngredientStock(item.Name) >= 0) // Se o ingrediente existe no inventário
                 {
                     availableItems.Add(item);
+                }
+            }
+
+            // Adiciona reposição de ingredientes que foram comprados anteriormente como novos
+            foreach (var purchasedIngredientName in _purchasedNewIngredients)
+            {
+                if (_inventoryService.GetIngredientStock(purchasedIngredientName) >= 0) // Se existe no inventário
+                {
+                    var originalItem = _shopItems.First(item => item.Name == purchasedIngredientName && item.Type == ShopItemType.NewIngredient);
+                    // Cria um item de reposição baseado no item original, mas com preço e quantidade reduzidos
+                    var restockItem = new ShopItem(
+                        originalItem.Name, 
+                        originalItem.Tags, 
+                        (int)(originalItem.Price * 0.6), // 60% do preço original para reposição
+                        Math.Max(1, originalItem.Quantity - 1), // Quantidade um pouco menor
+                        ShopItemType.IngredientRestock);
+                    
+                    availableItems.Add(restockItem);
                 }
             }
 

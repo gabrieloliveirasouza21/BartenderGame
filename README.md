@@ -2,9 +2,12 @@
 
 Um jogo de simulação de bar desenvolvido em C# (.NET 8) onde você atua como bartender, preparando drinks para clientes com diferentes preferências e gerenciando pagamentos baseados na satisfação dos clientes. **Nova Feature**: Loja de ingredientes que abre a cada 3 clientes servidos!
 
+**? Interface totalmente redesenhada com Spectre.Console para uma experiência visual incrível!**
+
 ## ?? Índice
 
 - [Visão Geral](#-visão-geral)
+- [Interface Visual](#-interface-visual)
 - [Arquitetura](#-arquitetura)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
 - [Mecânicas do Jogo](#-mecânicas-do-jogo)
@@ -23,9 +26,78 @@ O **Bartender Game** é um jogo de console onde você:
 - Recebe pagamentos baseados na satisfação do cliente
 - Gerencia um inventário limitado de ingredientes
 - **?? Compra novos ingredientes na loja a cada 3 clientes servidos**
+- **? Desfruta de uma interface visual rica e colorida**
 
 O jogo implementa uma mecânica de **compatibilidade de efeitos** onde clientes reagem diferentemente dependendo de quão próximo o drink servido está do que eles desejavam.
 
+## ? Interface Visual
+
+O jogo utiliza **Spectre.Console** para criar uma experiência visual rica:
+
+### ?? Características da Interface
+
+- **??? Títulos ASCII Art**: Logos estilizados para seções importantes
+- **?? Tabelas Dinâmicas**: Informações organizadas em tabelas coloridas
+- **?? Painéis Temáticos**: Cada seção tem seu próprio estilo visual
+- **?? Cores Contextuais**: 
+  - ?? Verde para sucesso e dinheiro alto
+  - ?? Amarelo para avisos e dinheiro médio
+  - ?? Vermelho para erros e dinheiro baixo
+  - ?? Azul para informações dos clientes
+  - ?? Roxo para status do jogo
+- **?? Inputs Intuitivos**: Prompts claros e validação automática
+- **?? Animações de Texto**: Efeitos visuais para experiência imersiva
+
+### ??? Telas Principais
+
+#### ?? Tela Inicial??????   ?????  ??????  ???????? ??????? ???    ?? ??????  ??????? ??????      ??????   ?????  ???    ??? ??????? 
+??   ?? ??   ?? ??   ??    ??    ??      ????   ?? ??   ?? ??      ??   ??    ??       ??   ?? ????  ???? ??      
+??????  ??????? ??????     ??    ?????   ?? ??  ?? ??   ?? ?????   ??????     ??   ??? ??????? ?? ???? ?? ?????   
+??   ?? ??   ?? ??   ??    ??    ??      ??  ?? ?? ??   ?? ??      ??   ??    ??    ?? ??   ?? ??  ??  ?? ??      
+??????  ??   ?? ??   ??    ??    ??????? ??   ???? ??????  ??????? ??   ??     ??????  ??   ?? ??      ?? ??????? 
+
+???? BEM-VINDO ??????????????????????????????????????????????????????????????????????????????????
+?                                                                                               ?
+?  ?? Prepare drinks para satisfazer seus clientes! ??                                         ?
+?                                                                                               ?
+?  • Misture ingredientes para criar drinks únicos                                             ?
+?  • Satisfaça as preferências dos clientes                                                    ?
+?  • Ganhe dinheiro e expanda seu bar                                                          ?
+?  • Visite a loja a cada 3 clientes!                                                          ?
+?                                                                                               ?
+?????????????????????????????????????????????????????????????????????????????????????????????????
+#### ?? Cliente?????????????????????????????????????????? ?? CLIENTE: MARIA ??????????????????????????????????????????
+
+???? Pedido?????????????????????????????????????????????????????????????????????????????????????????
+?                                                                                                   ?
+?  "Olá! Eu gostaria de algo Reconfortante, por favor."                                            ?
+?                                                                                                   ?
+?????????????????????????????????????????????????????????????????????????????????????????????????????
+#### ?? Inventário           ?? INGREDIENTES DISPONÍVEIS           
+?????????????????????????????????????????
+? # ? Nome       ? Tags    ? Quantidade ?
+?????????????????????????????????????????
+? 1 ? Café       ? Amargo  ?     10     ?
+? 2 ? Leite      ? Doce    ?     8      ?
+? 3 ? Canela     ? Doce    ?     5      ?
+? 4 ? Açúcar     ? Nenhuma ?     7      ?
+? 5 ? Chocolate  ? Nenhuma ?     4      ?
+? 6 ? Água       ? Nenhuma ?     15     ?
+?????????????????????????????????????????
+#### ?? Loja??     ??????      ??  ?????  
+??    ??    ??     ?? ??   ?? 
+??    ??    ??     ?? ??????? 
+??    ??    ????   ?? ??   ?? 
+?????  ?????? ????? ?? ??   ?? 
+
+???? LOJA DE INGREDIENTES????????????????????????????????????????????????????????????????????????????
+?                                                                                                   ?
+?  ?? Parabéns! Você serviu 3 clientes! ??                                                         ?
+?                                                                                                   ?
+?  ?? A loja está aberta para compras!                                                             ?
+?  Aproveite para expandir seu arsenal de ingredientes                                             ?
+?                                                                                                   ?
+?????????????????????????????????????????????????????????????????????????????????????????????????????
 ## ??? Arquitetura
 
 O projeto segue os princípios de **Clean Architecture** e **Domain-Driven Design**:
@@ -43,7 +115,7 @@ O projeto segue os princípios de **Clean Architecture** e **Domain-Driven Design
 1. **Domain Layer**: Contém as regras de negócio puras
 2. **Application Layer**: Orquestra os casos de uso
 3. **Infrastructure Layer**: Implementações concretas
-4. **UI Layer**: Interface com o usuário
+4. **UI Layer**: Interface com o usuário (Spectre.Console)
 
 ## ?? Estrutura do Projeto
 
@@ -257,15 +329,17 @@ A loja abre automaticamente **a cada 3 clientes servidos**:
 ### ?? Fluxo da Loja
 1. **Abertura Automática**: Após 3 clientes servidos
 2. **Exibição de Itens**: Lista com preços e quantidades
-   - ?? = Novo ingrediente (compra única)
-   - ?? = Reposição (compra ilimitada)
+   - ?? = Novo ingrediente (compra única) - aparece com **NEW!** na primeira vez
+   - ?? = Reposição (compra ilimitada) - ingredientes originais e previamente comprados
 3. **Seleção**: Escolha os itens desejados
 4. **Compra**: Gasta dinheiro e atualiza inventário
-5. **Remoção Automática**: Novos ingredientes saem da loja
-6. **Continuação**: Opção de comprar mais itens
-7. **Fechamento**: Volta ao jogo normal
+5. **Remoção Automática**: Novos ingredientes saem da categoria de novos
+6. **Conversão**: Ingredientes comprados aparecem como reposição nas próximas lojas
+7. **Continuação**: Opção de comprar mais itens
+8. **Fechamento**: Volta ao jogo normal
 
-### ?? Mecânica de Compra Única// Novos ingredientes são rastreados para evitar re-compra
+### ?? Mecânica de Compra Única e Reposição```csharp
+// Novos ingredientes são rastreados para evitar re-compra
 private readonly HashSet<string> _purchasedNewIngredients;
 
 public void PurchaseItem(ShopItem item)
@@ -273,158 +347,44 @@ public void PurchaseItem(ShopItem item)
     if (item.Type == ShopItemType.NewIngredient)
     {
         _inventoryService.AddNewIngredient(item.Name, item.Tags, item.Quantity);
-        _purchasedNewIngredients.Add(item.Name); // Remove da loja
+        _purchasedNewIngredients.Add(item.Name); // Remove da categoria de novos
     }
     // Reposição pode ser comprada infinitamente
 }
-## ??? Tecnologias
 
-- **Framework**: .NET 8
-- **Linguagem**: C# 12.0
-- **Arquitetura**: Clean Architecture
-- **Padrões**: DDD, Event-Driven Architecture
-- **Testes**: NUnit, Moq
-- **Interface**: Console Application
-
-## ?? Como Executar
-
-### Pré-requisitos
-- .NET 8 SDK instalado
-
-### Executando o Jogo# Clone o repositório
-git clone [repository-url]
-
-# Navegue para o diretório
-cd Bartender
-
-# Execute o projeto
-dotnet run
-### Como Jogar
-1. **Início**: O jogo mostra uma mensagem de boas-vindas
-2. **Cliente Chega**: Um cliente chega com uma preferência específica
-3. **Seleção de Ingredientes**: Escolha ingredientes digitando números separados por vírgula (ex: 1,2,3)
-4. **Confirmação**: Confirme se deseja servir o drink preparado
-5. **Reação**: Veja a reação do cliente e o pagamento recebido
-6. **?? Loja**: A cada 3 clientes, a loja abre automaticamente
-7. **?? Compras**: Compre novos ingredientes ou reponha estoque
-8. **Continuação**: Escolha se deseja continuar jogando
-
-### ?? Como Usar a Loja
-1. **Abertura Automática**: A loja abre após servir 3 clientes
-2. **Visualização**: Veja seus fundos e itens disponíveis
-   - ?? = Ingredientes novos (só pode comprar uma vez)
-   - ?? = Reposição (pode comprar várias vezes)
-3. **Seleção**: Digite o número do item desejado
-4. **Compra**: Confirme a compra (se tiver dinheiro suficiente)
-5. **Atualização**: Novos ingredientes desaparecem após compra
-6. **Continuação**: Escolha continuar comprando ou sair da loja
-
-## ?? Testes
-
-O projeto possui cobertura completa de testes unitários:
-# Executar todos os testes
-dotnet test
-
-# Executar testes com cobertura
-dotnet test --collect:"XPlat Code Coverage"
-### Estrutura de TestesBartenderTests/
-??? Tests/
-?   ??? Domain/
-?   ?   ??? Models/          # Inclui ShopItemTests
-?   ?   ??? Services/        # Inclui ShopServiceTests
-?   ??? UseCases/            # Inclui ShopUseCaseTests
-?   ??? Events/              # Inclui testes dos novos eventos
-?   ??? Integration/         # ?? Testes de integração da loja
-?   ??? Adapters/Input/UI/
-### Testes Destacados
-- **PaymentServiceConsistencyTests**: Verifica comportamento aleatório do sistema de pagamento
-- **ServeClientUseCaseTests**: Testa lógica de avaliação de clientes
-- **GameLoopUseCaseTests**: Verifica fluxo completo do jogo
-- **CraftServiceTests**: Testa criação de drinks
-- **?? ShopServiceTests**: Testa funcionalidades da loja
-- **?? ShopUseCaseTests**: Testa casos de uso da loja
-- **?? ShopIntegrationTests**: Testa comportamento completo da loja
-- **?? GameStateTests**: Inclui testes para SpendMoney e ShouldOpenShop
-- **?? InventoryServiceShopTests**: Testa adição e reposição de ingredientes
-
-## ?? Documentação Técnica
-
-### Interfaces Principais
-
-#### `IGameView`
-Interface para abstração da camada de apresentação:public interface IGameView
+// Ingredientes comprados aparecem como reposição em lojas subsequentes
+foreach (var purchasedIngredientName in _purchasedNewIngredients)
 {
-    void DisplayWelcomeMessage();
-    void DisplayClientArrival(Client client);
-    List<Ingredient> GetSelectedIngredients(List<Ingredient> availableIngredients);
-    bool ConfirmServeDrink(Drink drink);
-    void DisplayClientReaction(string reactionMessage);
-    void DisplayPaymentResult(PaymentResult paymentResult);
-    bool AskToContinue();
-    
-    // ?? Métodos da loja
-    void DisplayShopOpening();
-    void DisplayShopItems(List<ShopItem> items, int playerMoney);
-    ShopItem? GetSelectedShopItem(List<ShopItem> items);
-    void DisplayPurchaseResult(bool success, ShopItem item, int remainingMoney);
-    bool AskToContinueShopping();
+    if (_inventoryService.GetIngredientStock(purchasedIngredientName) >= 0)
+    {
+        // Cria item de reposição com preço reduzido (60% do original)
+        var restockItem = new ShopItem(/* ... */);
+        availableItems.Add(restockItem);
+    }
 }
-#### `IShopService` ??public interface IShopService
-{
-    List<ShopItem> GetAvailableItems();
-    bool CanPurchase(ShopItem item, int playerMoney);
-    void PurchaseItem(ShopItem item);
-}
-#### `IPaymentService`public interface IPaymentService
-{
-    PaymentResult CalculatePayment(ClientReaction reaction, int baseDrinkPrice);
-}
-### Fluxo Principal do Jogo
+### ?? Sistema de Progressão da Loja
 
-1. **Inicialização**: `Program.cs` configura dependências
-2. **Loop Principal**: `GamePresenter.StartGame()`
-3. **Nova Rodada**: `GameLoopUseCase.StartNewRound()`
-4. **Preparação**: `PrepareDrinkUseCase.Execute()`
-5. **Servir**: `ServeClientUseCase.Execute()`
-6. **Finalização**: `GameLoopUseCase.CompleteRound()`
-7. **?? Verificação da Loja**: `GameState.ShouldOpenShop()`
-8. **?? Abertura da Loja**: `GamePresenter.OpenShop()`
+#### **Primeira Loja (Rodada 3)**
+- **?? Novos Ingredientes**: Baunilha, Gengibre, Mel, Limão, Hortelã (com **NEW!**)
+- **?? Reposição**: Café, Leite, Canela, Açúcar, Chocolate, Água
 
-### Padrões de Design Utilizados
+#### **Segunda Loja (Rodada 6)**
+- **?? Novos Ingredientes**: Apenas os que não foram comprados na primeira loja
+- **?? Reposição**: 
+  - Ingredientes originais (Café, Leite, etc.)
+  - **+ Ingredientes comprados** na primeira loja (preço reduzido)
 
-- **Repository Pattern**: Para abstração de dados
-- **Observer Pattern**: Sistema de eventos
-- **Strategy Pattern**: Diferentes estratégias de pagamento
-- **Dependency Injection**: Inversão de controle
-- **MVP Pattern**: Separação de apresentação e lógica
+#### **Terceira Loja (Rodada 9)**
+- **?? Novos Ingredientes**: Apenas os que nunca foram comprados
+- **?? Reposição**: 
+  - Ingredientes originais
+  - **+ Todos os ingredientes comprados** nas lojas anteriores
 
-### Extensibilidade
+### ?? Sistema de Preços da Loja
+| Tipo | Preço | Quantidade | Disponibilidade |
+|------|-------|------------|-----------------|
+| **Novo Ingrediente** | 100% | Original | Uma vez apenas |
+| **Reposição Original** | Fixo | Fixo | Ilimitada |
+| **Reposição Comprada** | 60% do original | Original - 1 | Ilimitada |
 
-O projeto foi desenhado para fácil extensão:
-
-- **Novos Ingredientes**: Adicionar ao `ShopService.InitializeShopItems()`
-- **Novas Receitas**: Estender `RecipeBook`
-- **Novos Efeitos**: Expandir mapa de compatibilidade
-- **Nova UI**: Implementar `IGameView`
-- **Novos Eventos**: Implementar `IEvent`
-- **?? Preços Dinâmicos**: Implementar estratégias de precificação
-- **?? Ciclos da Loja**: Modificar `GameState.ShouldOpenShop()`
-- **?? Tipos de Loja**: Adicionar novos `ShopItemType`
-
----
-
-## ?? Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
-
-## ?? Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para detalhes.
-
----
-
-*Desenvolvido com ? e muito carinho! Agora com loja de ingredientes inteligente que remove itens após compra! ???*
+> **?? Estratégia**: Ingredientes comprados como novos têm preço reduzido na reposição!
