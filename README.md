@@ -295,6 +295,15 @@ A loja abre automaticamente **a cada 3 clientes servidos**:
 - Após o 6º cliente ? Loja abre novamente
 - E assim por diante...
 
+### ?? Sistema de Seleção Aleatória
+**?? Nova Mecânica**: A loja agora mostra apenas **3 ingredientes aleatórios** por visita!
+
+#### **Como Funciona:**
+- **?? Máximo 3 Itens**: Cada visita à loja mostra no máximo 3 ingredientes
+- **?? Seleção Aleatória**: Os itens são escolhidos aleatoriamente entre todos disponíveis
+- **?? Variedade**: Cada visita pode ter uma combinação diferente de itens
+- **?? Balanceamento**: Mistura aleatória entre novos ingredientes e reposições
+
 ### ??? Itens Disponíveis na Loja
 
 #### ?? Novos Ingredientes (Compra Única)
@@ -306,7 +315,7 @@ A loja abre automaticamente **a cada 3 clientes servidos**:
 | **Limão** | Ácido, Refrescante | $15 | 5 unidades |
 | **Hortelã** | Refrescante, Mentolado | $18 | 4 unidades |
 
-> **?? Importante**: Cada novo ingrediente pode ser comprado apenas **uma vez**. Após a compra, ele **sai da loja permanentemente**.
+> **?? Importante**: Cada novo ingrediente pode ser comprado apenas **uma vez**. Após a compra, ele **sai da categoria de novos**.
 
 #### ?? Reposição de Ingredientes (Compra Ilimitada)
 | Ingrediente | Preço | Quantidade |
@@ -318,73 +327,86 @@ A loja abre automaticamente **a cada 3 clientes servidos**:
 | **Chocolate** | $15 | 3 unidades |
 | **Água** | $2 | 10 unidades |
 
-> **?? Reposição**: Estes itens **permanecem na loja** após compra e podem ser comprados múltiplas vezes.
+> **?? Reposição**: Estes itens **podem aparecer na loja** e podem ser comprados múltiplas vezes.
 
-### ?? Estratégia de Compras
-- **Novos ingredientes** permitem criar drinks mais variados
-- **Novas tags** podem resultar em melhores combinações
-- **Reposição** mantém o estoque para receitas conhecidas
-- **Planeje bem**: novos ingredientes só podem ser comprados uma vez!
+### ?? Estratégia de Compras com Sistema Aleatório
+- **?? Aleatoriedade**: Nem todos os itens estarão disponíveis a cada visita
+- **? Oportunidades**: Aproveite quando seus ingredientes desejados aparecerem
+- **?? Economia**: Guarde dinheiro para quando itens importantes estiverem disponíveis
+- **?? Paciência**: Se não encontrar o que precisa, espere a próxima loja
+- **?? Adaptação**: Seja flexível com suas estratégias de compra
 
-### ?? Fluxo da Loja
+### ?? Fluxo da Loja Atualizado
 1. **Abertura Automática**: Após 3 clientes servidos
-2. **Exibição de Itens**: Lista com preços e quantidades
+2. **?? Seleção Aleatória**: Sistema escolhe até 3 ingredientes disponíveis
+3. **Exibição de Itens**: Lista com preços e quantidades
    - ?? = Novo ingrediente (compra única) - aparece com **NEW!** na primeira vez
    - ?? = Reposição (compra ilimitada) - ingredientes originais e previamente comprados
-3. **Seleção**: Escolha os itens desejados
-4. **Compra**: Gasta dinheiro e atualiza inventário
-5. **Remoção Automática**: Novos ingredientes saem da categoria de novos
-6. **Conversão**: Ingredientes comprados aparecem como reposição nas próximas lojas
-7. **Continuação**: Opção de comprar mais itens
-8. **Fechamento**: Volta ao jogo normal
+4. **Seleção**: Escolha os itens desejados entre os 3 disponíveis
+5. **Compra**: Gasta dinheiro e atualiza inventário
+6. **Remoção Automática**: Novos ingredientes saem da categoria de novos
+7. **Conversão**: Ingredientes comprados aparecem como reposição nas próximas lojas
+8. **Continuação**: Opção de comprar mais itens entre os disponíveis
+9. **Fechamento**: Volta ao jogo normal
 
-### ?? Mecânica de Compra Única e Reposição```csharp
-// Novos ingredientes são rastreados para evitar re-compra
-private readonly HashSet<string> _purchasedNewIngredients;
+### ?? Mecânica de Compra Única e Reposição// Sistema aleatório com máximo de 3 itens
+private const int MAX_SHOP_ITEMS = 3;
 
-public void PurchaseItem(ShopItem item)
+public List<ShopItem> GetAvailableItems()
 {
-    if (item.Type == ShopItemType.NewIngredient)
-    {
-        _inventoryService.AddNewIngredient(item.Name, item.Tags, item.Quantity);
-        _purchasedNewIngredients.Add(item.Name); // Remove da categoria de novos
-    }
-    // Reposição pode ser comprada infinitamente
+    var allPossibleItems = new List<ShopItem>();
+    
+    // Coleta todos os itens possíveis
+    // - Novos ingredientes não comprados
+    // - Reposições de ingredientes originais
+    // - Reposições de ingredientes comprados anteriormente
+    
+    // Seleciona aleatoriamente até 3 itens
+    return SelectRandomItems(allPossibleItems, MAX_SHOP_ITEMS);
 }
 
-// Ingredientes comprados aparecem como reposição em lojas subsequentes
-foreach (var purchasedIngredientName in _purchasedNewIngredients)
+private List<ShopItem> SelectRandomItems(List<ShopItem> allItems, int maxItems)
 {
-    if (_inventoryService.GetIngredientStock(purchasedIngredientName) >= 0)
-    {
-        // Cria item de reposição com preço reduzido (60% do original)
-        var restockItem = new ShopItem(/* ... */);
-        availableItems.Add(restockItem);
-    }
+    if (allItems.Count <= maxItems)
+        return allItems.ToList();
+    
+    // Embaralha e seleciona os primeiros maxItems
+    var shuffledItems = allItems.OrderBy(x => _random.Next()).ToList();
+    return shuffledItems.Take(maxItems).ToList();
 }
-### ?? Sistema de Progressão da Loja
+### ?? Sistema de Progressão da Loja Atualizado
 
 #### **Primeira Loja (Rodada 3)**
-- **?? Novos Ingredientes**: Baunilha, Gengibre, Mel, Limão, Hortelã (com **NEW!**)
-- **?? Reposição**: Café, Leite, Canela, Açúcar, Chocolate, Água
+- **?? 3 Itens Aleatórios** escolhidos entre:
+  - **?? Novos Ingredientes**: Baunilha, Gengibre, Mel, Limão, Hortelã (com **NEW!**)
+  - **?? Reposição**: Café, Leite, Canela, Açúcar, Chocolate, Água
 
 #### **Segunda Loja (Rodada 6)**
-- **?? Novos Ingredientes**: Apenas os que não foram comprados na primeira loja
-- **?? Reposição**: 
-  - Ingredientes originais (Café, Leite, etc.)
-  - **+ Ingredientes comprados** na primeira loja (preço reduzido)
+- **?? 3 Itens Aleatórios** escolhidos entre:
+  - **?? Novos Ingredientes**: Apenas os que não foram comprados na primeira loja
+  - **?? Reposição**: 
+    - Ingredientes originais (Café, Leite, etc.)
+    - **+ Ingredientes comprados** na primeira loja (preço reduzido)
 
 #### **Terceira Loja (Rodada 9)**
-- **?? Novos Ingredientes**: Apenas os que nunca foram comprados
-- **?? Reposição**: 
-  - Ingredientes originais
-  - **+ Todos os ingredientes comprados** nas lojas anteriores
+- **?? 3 Itens Aleatórios** escolhidos entre:
+  - **?? Novos Ingredientes**: Apenas os que nunca foram comprados
+  - **?? Reposição**: 
+    - Ingredientes originais
+    - **+ Todos os ingredientes comprados** nas lojas anteriores
 
 ### ?? Sistema de Preços da Loja
 | Tipo | Preço | Quantidade | Disponibilidade |
 |------|-------|------------|-----------------|
 | **Novo Ingrediente** | 100% | Original | Uma vez apenas |
-| **Reposição Original** | Fixo | Fixo | Ilimitada |
-| **Reposição Comprada** | 60% do original | Original - 1 | Ilimitada |
+| **Reposição Original** | Fixo | Fixo | Chance aleatória |
+| **Reposição Comprada** | 60% do original | Original - 1 | Chance aleatória |
 
-> **?? Estratégia**: Ingredientes comprados como novos têm preço reduzido na reposição!
+### ?? Impacto no Gameplay
+- **?? Elemento de Sorte**: Adiciona imprevisibilidade e estratégia
+- **?? Gestão de Recursos**: Decisões mais importantes sobre quando gastar
+- **?? Rejogabilidade**: Cada partida tem experiências diferentes na loja
+- **? Tomada de Decisão**: Decisões rápidas quando itens desejados aparecem
+- **?? Planejamento**: Estratégias de longo prazo vs oportunidades imediatas
+
+> **?? Dica Estratégica**: Com apenas 3 itens por loja, planeje bem seus gastos e aproveite as oportunidades quando seus ingredientes favoritos aparecerem!

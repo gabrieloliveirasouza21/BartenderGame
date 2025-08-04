@@ -330,6 +330,7 @@ namespace Bartender.Adapters.Input.UI
             var congratsPanel = new Panel(
                 new Markup("[bold green]?? Parabéns! Você serviu 3 clientes! ??[/]\n\n" +
                           "[bold yellow]?? A loja está aberta para compras![/]\n" +
+                          "[dim]?? Seleção aleatória de até 3 ingredientes disponíveis hoje![/]\n" +
                           "[dim]Aproveite para expandir seu arsenal de ingredientes[/]"))
             {
                 Border = BoxBorder.Double,
