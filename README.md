@@ -225,7 +225,7 @@ A loja abre automaticamente **a cada 3 clientes servidos**:
 
 ### ??? Itens Disponíveis na Loja
 
-#### ?? Novos Ingredientes
+#### ?? Novos Ingredientes (Compra Única)
 | Ingrediente | Tags | Preço | Quantidade |
 |-------------|------|-------|------------|
 | **Baunilha** | Doce, Aromático | $25 | 3 unidades |
@@ -234,7 +234,9 @@ A loja abre automaticamente **a cada 3 clientes servidos**:
 | **Limão** | Ácido, Refrescante | $15 | 5 unidades |
 | **Hortelã** | Refrescante, Mentolado | $18 | 4 unidades |
 
-#### ?? Reposição de Ingredientes
+> **?? Importante**: Cada novo ingrediente pode ser comprado apenas **uma vez**. Após a compra, ele **sai da loja permanentemente**.
+
+#### ?? Reposição de Ingredientes (Compra Ilimitada)
 | Ingrediente | Preço | Quantidade |
 |-------------|-------|------------|
 | **Café** | $10 | 5 unidades |
@@ -244,20 +246,37 @@ A loja abre automaticamente **a cada 3 clientes servidos**:
 | **Chocolate** | $15 | 3 unidades |
 | **Água** | $2 | 10 unidades |
 
+> **?? Reposição**: Estes itens **permanecem na loja** após compra e podem ser comprados múltiplas vezes.
+
 ### ?? Estratégia de Compras
 - **Novos ingredientes** permitem criar drinks mais variados
 - **Novas tags** podem resultar em melhores combinações
 - **Reposição** mantém o estoque para receitas conhecidas
-- Gerencie seu dinheiro sabiamente!
+- **Planeje bem**: novos ingredientes só podem ser comprados uma vez!
 
 ### ?? Fluxo da Loja
 1. **Abertura Automática**: Após 3 clientes servidos
 2. **Exibição de Itens**: Lista com preços e quantidades
+   - ?? = Novo ingrediente (compra única)
+   - ?? = Reposição (compra ilimitada)
 3. **Seleção**: Escolha os itens desejados
 4. **Compra**: Gasta dinheiro e atualiza inventário
-5. **Continuação**: Opção de comprar mais itens
-6. **Fechamento**: Volta ao jogo normal
+5. **Remoção Automática**: Novos ingredientes saem da loja
+6. **Continuação**: Opção de comprar mais itens
+7. **Fechamento**: Volta ao jogo normal
 
+### ?? Mecânica de Compra Única// Novos ingredientes são rastreados para evitar re-compra
+private readonly HashSet<string> _purchasedNewIngredients;
+
+public void PurchaseItem(ShopItem item)
+{
+    if (item.Type == ShopItemType.NewIngredient)
+    {
+        _inventoryService.AddNewIngredient(item.Name, item.Tags, item.Quantity);
+        _purchasedNewIngredients.Add(item.Name); // Remove da loja
+    }
+    // Reposição pode ser comprada infinitamente
+}
 ## ??? Tecnologias
 
 - **Framework**: .NET 8
@@ -293,9 +312,12 @@ dotnet run
 ### ?? Como Usar a Loja
 1. **Abertura Automática**: A loja abre após servir 3 clientes
 2. **Visualização**: Veja seus fundos e itens disponíveis
+   - ?? = Ingredientes novos (só pode comprar uma vez)
+   - ?? = Reposição (pode comprar várias vezes)
 3. **Seleção**: Digite o número do item desejado
 4. **Compra**: Confirme a compra (se tiver dinheiro suficiente)
-5. **Continuação**: Escolha continuar comprando ou sair da loja
+5. **Atualização**: Novos ingredientes desaparecem após compra
+6. **Continuação**: Escolha continuar comprando ou sair da loja
 
 ## ?? Testes
 
@@ -312,6 +334,7 @@ dotnet test --collect:"XPlat Code Coverage"
 ?   ?   ??? Services/        # Inclui ShopServiceTests
 ?   ??? UseCases/            # Inclui ShopUseCaseTests
 ?   ??? Events/              # Inclui testes dos novos eventos
+?   ??? Integration/         # ?? Testes de integração da loja
 ?   ??? Adapters/Input/UI/
 ### Testes Destacados
 - **PaymentServiceConsistencyTests**: Verifica comportamento aleatório do sistema de pagamento
@@ -320,6 +343,7 @@ dotnet test --collect:"XPlat Code Coverage"
 - **CraftServiceTests**: Testa criação de drinks
 - **?? ShopServiceTests**: Testa funcionalidades da loja
 - **?? ShopUseCaseTests**: Testa casos de uso da loja
+- **?? ShopIntegrationTests**: Testa comportamento completo da loja
 - **?? GameStateTests**: Inclui testes para SpendMoney e ShouldOpenShop
 - **?? InventoryServiceShopTests**: Testa adição e reposição de ingredientes
 
@@ -378,14 +402,14 @@ Interface para abstração da camada de apresentação:public interface IGameView
 
 O projeto foi desenhado para fácil extensão:
 
-- **Novos Ingredientes**: Adicionar ao `ShopService`
+- **Novos Ingredientes**: Adicionar ao `ShopService.InitializeShopItems()`
 - **Novas Receitas**: Estender `RecipeBook`
 - **Novos Efeitos**: Expandir mapa de compatibilidade
 - **Nova UI**: Implementar `IGameView`
 - **Novos Eventos**: Implementar `IEvent`
-- **?? Novos Itens da Loja**: Estender `ShopService.InitializeShopItems()`
 - **?? Preços Dinâmicos**: Implementar estratégias de precificação
 - **?? Ciclos da Loja**: Modificar `GameState.ShouldOpenShop()`
+- **?? Tipos de Loja**: Adicionar novos `ShopItemType`
 
 ---
 
@@ -403,4 +427,4 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para detalhes.
 
 ---
 
-*Desenvolvido com ? e muito carinho! Agora com loja de ingredientes para expandir suas possibilidades! ??*
+*Desenvolvido com ? e muito carinho! Agora com loja de ingredientes inteligente que remove itens após compra! ???*

@@ -7,19 +7,23 @@ namespace Bartender.GameCore.Domain.Services
     {
         private readonly IInventoryService _inventoryService;
         private readonly List<ShopItem> _shopItems;
+        private readonly HashSet<string> _purchasedNewIngredients;
 
         public ShopService(IInventoryService inventoryService)
         {
             _inventoryService = inventoryService;
             _shopItems = InitializeShopItems();
+            _purchasedNewIngredients = new HashSet<string>();
         }
 
         public List<ShopItem> GetAvailableItems()
         {
             var availableItems = new List<ShopItem>();
             
-            // Adiciona novos ingredientes
-            availableItems.AddRange(_shopItems.Where(item => item.Type == ShopItemType.NewIngredient));
+            // Adiciona novos ingredientes que ainda não foram comprados
+            var newIngredientsAvailable = _shopItems
+                .Where(item => item.Type == ShopItemType.NewIngredient && !_purchasedNewIngredients.Contains(item.Name));
+            availableItems.AddRange(newIngredientsAvailable);
             
             // Adiciona reposição de ingredientes existentes
             foreach (var item in _shopItems.Where(item => item.Type == ShopItemType.IngredientRestock))
@@ -43,10 +47,13 @@ namespace Bartender.GameCore.Domain.Services
             if (item.Type == ShopItemType.NewIngredient)
             {
                 _inventoryService.AddNewIngredient(item.Name, item.Tags, item.Quantity);
+                // Marca o novo ingrediente como comprado para que não apareça mais na loja
+                _purchasedNewIngredients.Add(item.Name);
             }
             else if (item.Type == ShopItemType.IngredientRestock)
             {
                 _inventoryService.RestockIngredient(item.Name, item.Quantity);
+                // Reposição pode ser comprada várias vezes, então não adicionamos à lista de comprados
             }
         }
 
